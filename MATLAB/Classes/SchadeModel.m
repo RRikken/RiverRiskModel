@@ -122,5 +122,35 @@ classdef SchadeModel
             DamageFactorLowRise =  alpha;
         end
         
+        function DamageFactorMediumRise = CalculateDamageFactorMediumRise(d, u, ukr, r)
+            if d <= 0
+                alpha = 0;
+                if u > ukr
+                    alpha = 1;
+                elseif s ~= 0
+                    P = 0.8E-3 * d^1.8 * r;  %Something might be wrong. '> 0.5' was added to the end of the sourcefile;
+                else
+                    P = 0;
+                end
+                s1 = P + (1 - P) * (1 - (1 - max([0,min([ d, 12 ]) /12 ]))^4);
+                alpha = max([0, min([1, s1]) ]);
+                DamageFactorMediumRise = alpha;
+            end
+        end
+        
+        function DamageFactorHighRise = CalaculateDamgaFactorHighRise(d, u, ukr, r)
+            if d <= 0
+                alpha = 0;
+            elseif u > ukr
+                alpha = 1;
+            elseif s ~=  0
+                P = 0.4E-3 * d^1.8 * r;
+            else
+                P = 0;
+            end
+            s1 = P + (1 - P) * (1 - (1 - max([0,min([ d, 18 ]) ]) / 18 )^4 );
+            alpha = max([ 0 , min([1, s1]) ]);
+            DamageFactorHighRise = alpha;
+        end
     end
 end
