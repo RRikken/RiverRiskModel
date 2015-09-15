@@ -62,18 +62,18 @@ classdef SchadeModel
                     p =  0;
                 end
                 if d <= 1
-                    s1 = -0.470 * sqrt(d) + 0.940*d; % 0,1
+                    s1 = -0.470 * d^2 + 0.940*d; % 0,1
                 elseif d <= 2
                     s1 = 0.030 * d + 0.44; %1,2
                 elseif d <= 4
-                    s1 = 0.005 * sqrt(d) + 0.135 * d + 0.21; %2,4
+                    s1 = 0.005 * d^2 + 0.135 * d + 0.21; %2,4
                 else
-                    s1 = -0.170 * sqrt(d) + 1.700 * d - 3.25; %4,5
+                    s1 = -0.170 * d^2 + 1.700 * d - 3.25; %4,5
                 end
-                rs = max([0,min([1,s1])]);
+                rs = max([0,min([1, s1]) ]);
                 rs = p * 1 + (1 - p) * rs;
             end
-            InboedelSchade = max([0, min([ 1, rs]) ]);
+            InboedelSchade = max([0, min([1, rs]) ]);
         end
         
         function OpstalSchade = BOERTIEN_opstal(d,u,w,r,s,ukr)
@@ -90,11 +90,11 @@ classdef SchadeModel
                     p = 0;
                 end
                 if d < 2
-                    s1 = 0.005*sqrt(d) + 0.045*d; %0,2
+                    s1 = 0.005 * d^2 + 0.045*d; %0,2
                 elseif d<4
-                    s1 = 0.045*sqrt(d) + 0.015 * d - 0.1; %2,4
+                    s1 = 0.045 * d^2 + 0.015 * d - 0.1; %2,4
                 else
-                    s1 = -0.32 *sqr(d) + 3.2 *d - 7;  %4,5
+                    s1 = -0.32  * d^2 + 3.2 *d - 7;  %4,5
                 end
                 rs = max(0,min(1,s1));
                 rs = p*1+(1-p)*rs;
@@ -105,9 +105,22 @@ classdef SchadeModel
         function SchadeEensgezinswoningenEnBoerderijen = SSM_EengezinswoningenEnBoerderijen(d,u,w,r,s,ukr)
             f = 215500 / 315500;
             SchadeEensgezinswoningenEnBoerderijen = f * BOERTIEN_opstal(d,u,w,r,s,ukr) + (1 - f) * BOERTIEN_inboedels(d,u,w,r,s,ukr);
-        end;
+        end
         
+        function DamageFactorLowRise = CalculateDamageLowRise(d, u, ukr, r)
+            if d <= 0
+                alpha = 0;
+            elseif u > 0.25 * ukr
+                alpha = 1;
+            elseif s ~= 0 %s <> 0 {ja} then begin
+                P = (0.8E-3 * d^1.8 * r );
+            else
+                P = 0;
+            end
+            s1 = P + (1 - P) * (1 - (1 - max([ 0, min([ d, 6 ]) ]) / 6 )^4 );
+            alpha = max([0, min([1, s1]) ]);
+            DamageFactorLowRise =  alpha;
+        end
         
     end
 end
-
