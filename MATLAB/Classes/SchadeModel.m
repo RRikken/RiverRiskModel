@@ -48,107 +48,107 @@ classdef SchadeModel
             end
         end
         
-        function InboedelSchade = BOERTIEN_inboedels(d,u,w,r,s,ukr)
-            if d <= 0
+        function DamageHouseholdContents = CalculateDamageContentsHousehold(FloodDepth,FlowRate,RiseRate,ShelterFactor,Storm,CriticalFlowRate)
+            if FloodDepth <= 0
                 rs = 0;
-            elseif d >= 5
+            elseif FloodDepth >= 5
                 rs = 1;
-            elseif u > 0.25*ukr
+            elseif FlowRate > 0.25*CriticalFlowRate
                 rs = 1;
             else
-                if s ~=  0 %(s<>0){storm}
-                    p = 0.8E-3 * d^1.8 * r;
+                if Storm ~=  0 %(s<>0){storm}
+                    StormFactor = 0.8E-3 * FloodDepth^1.8 * ShelterFactor;
                 else
-                    p =  0;
+                    StormFactor =  0;
                 end
-                if d <= 1
-                    s1 = -0.470 * d^2 + 0.940*d; % 0,1
-                elseif d <= 2
-                    s1 = 0.030 * d + 0.44; %1,2
-                elseif d <= 4
-                    s1 = 0.005 * d^2 + 0.135 * d + 0.21; %2,4
+                if FloodDepth <= 1
+                    s1 = -0.470 * FloodDepth^2 + 0.940*FloodDepth; % 0,1
+                elseif FloodDepth <= 2
+                    s1 = 0.030 * FloodDepth + 0.44; %1,2
+                elseif FloodDepth <= 4
+                    s1 = 0.005 * FloodDepth^2 + 0.135 * FloodDepth + 0.21; %2,4
                 else
-                    s1 = -0.170 * d^2 + 1.700 * d - 3.25; %4,5
+                    s1 = -0.170 * FloodDepth^2 + 1.700 * FloodDepth - 3.25; %4,5
                 end
                 rs = max([0,min([1, s1]) ]);
-                rs = p * 1 + (1 - p) * rs;
+                rs = StormFactor * 1 + (1 - StormFactor) * rs;
             end
-            InboedelSchade = max([0, min([1, rs]) ]);
+            DamageHouseholdContents = max([0, min([1, rs]) ]);
         end
         
-        function OpstalSchade = BOERTIEN_opstal(d,u,w,r,s,ukr)
-            if d <= 0
+        function DamageHouse = CalculateDamageHouse(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate)
+            if FloodDepth <= 0
                 rs = 0;
-            elseif d >= 5
+            elseif FloodDepth >= 5
                 rs = 1;
-            elseif u > 0.25 * ukr
+            elseif FlowRate > 0.25 * CriticalFlowRate
                 rs = 1;
             else
-                if  s ~= 0 %(s<>0){storm}
-                    p =  0.8E-3 * d^1.8 * r;
+                if  Storm ~= 0 %(s<>0){storm}
+                    StormFactor =  0.8E-3 * FloodDepth^1.8 * ShelterFactor;
                 else
-                    p = 0;
+                    StormFactor = 0;
                 end
-                if d < 2
-                    s1 = 0.005 * d^2 + 0.045*d; %0,2
-                elseif d<4
-                    s1 = 0.045 * d^2 + 0.015 * d - 0.1; %2,4
+                if FloodDepth < 2
+                    s1 = 0.005 * FloodDepth^2 + 0.045*FloodDepth; %0,2
+                elseif FloodDepth<4
+                    s1 = 0.045 * FloodDepth^2 + 0.015 * FloodDepth - 0.1; %2,4
                 else
-                    s1 = -0.32  * d^2 + 3.2 *d - 7;  %4,5
+                    s1 = -0.32  * FloodDepth^2 + 3.2 *FloodDepth - 7;  %4,5
                 end
                 rs = max(0,min(1,s1));
-                rs = p*1+(1-p)*rs;
+                rs = StormFactor*1+(1-StormFactor)*rs;
             end
-            OpstalSchade = max([0, min([1, rs]) ]);
+            DamageHouse = max([0, min([1, rs]) ]);
         end
         
-        function SchadeEensgezinswoningenEnBoerderijen = SSM_EengezinswoningenEnBoerderijen(d,u,w,r,s,ukr)
-            f = 215500 / 315500;
-            SchadeEensgezinswoningenEnBoerderijen = f * BOERTIEN_opstal(d,u,w,r,s,ukr) + (1 - f) * BOERTIEN_inboedels(d,u,w,r,s,ukr);
+        function DamageSingleHomesAndFarms = CalaculateDamageSingleHomesAndFarms(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate)
+            GuilderEuroRatio = 215500 / 315500;
+            DamageSingleHomesAndFarms = GuilderEuroRatio * CalculateDamageHouse(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate) + (1 - GuilderEuroRatio) * CalculateDamageContentsHousehold(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate);
         end
         
-        function DamageFactorLowRise = CalculateDamageLowRise(d, u, ukr, r)
-            if d <= 0
+        function DamageFactorLowRise = CalculateDamageLowRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor)
+            if FloodDepth <= 0
                 alpha = 0;
-            elseif u > 0.25 * ukr
+            elseif FlowRate > 0.25 * CriticalFlowRate
                 alpha = 1;
-            elseif s ~= 0 %s <> 0 {ja} then begin
-                P = (0.8E-3 * d^1.8 * r );
+            elseif Storm ~= 0 %s <> 0 {ja} then begin
+                StormFactor = (0.8E-3 * FloodDepth^1.8 * ShelterFactor );
             else
-                P = 0;
+                StormFactor = 0;
             end
-            s1 = P + (1 - P) * (1 - (1 - max([ 0, min([ d, 6 ]) ]) / 6 )^4 );
+            s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([ 0, min([ FloodDepth, 6 ]) ]) / 6 )^4 );
             alpha = max([0, min([1, s1]) ]);
             DamageFactorLowRise =  alpha;
         end
         
-        function DamageFactorMediumRise = CalculateDamageFactorMediumRise(d, u, ukr, r)
-            if d <= 0
+        function DamageFactorMediumRise = CalculateDamageFactorMediumRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor)
+            if FloodDepth <= 0
                 alpha = 0;
-                if u > ukr
+                if FlowRate > CriticalFlowRate
                     alpha = 1;
-                elseif s ~= 0
-                    P = 0.8E-3 * d^1.8 * r;  %Something might be wrong. '> 0.5' was added to the end of the sourcefile;
+                elseif Storm ~= 0
+                    StormFactor = 0.8E-3 * FloodDepth^1.8 * ShelterFactor;  %Something might be wrong. '> 0.5' was added to the end of the sourcefile;
                 else
-                    P = 0;
+                    StormFactor = 0;
                 end
-                s1 = P + (1 - P) * (1 - (1 - max([0,min([ d, 12 ]) /12 ]))^4);
+                s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([0,min([ FloodDepth, 12 ]) /12 ]))^4);
                 alpha = max([0, min([1, s1]) ]);
                 DamageFactorMediumRise = alpha;
             end
         end
         
-        function DamageFactorHighRise = CalaculateDamgaFactorHighRise(d, u, ukr, r)
-            if d <= 0
+        function DamageFactorHighRise = CalaculateDamgaFactorHighRise(FloodDepth, FlowRate, CriticalFlowRate, Storm, ShelterFactor)
+            if FloodDepth <= 0
                 alpha = 0;
-            elseif u > ukr
+            elseif FlowRate > CriticalFlowRate
                 alpha = 1;
-            elseif s ~=  0
-                P = 0.4E-3 * d^1.8 * r;
+            elseif Storm ~=  0
+                StormFactor = 0.4E-3 * FloodDepth^1.8 * ShelterFactor;
             else
-                P = 0;
+                StormFactor = 0;
             end
-            s1 = P + (1 - P) * (1 - (1 - max([0,min([ d, 18 ]) ]) / 18 )^4 );
+            s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([0,min([ FloodDepth, 18 ]) ]) / 18 )^4 );
             alpha = max([ 0 , min([1, s1]) ]);
             DamageFactorHighRise = alpha;
         end
