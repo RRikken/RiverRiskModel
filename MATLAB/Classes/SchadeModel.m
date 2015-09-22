@@ -3,22 +3,42 @@ classdef SchadeModel
     %   Detailed explanation goes here
     
     properties
+        NumberOfUnitsTable
+        MaximumDamageTable
+        FloodDepth
+        FlowRate 
+        RiseRate 
+        ShelterFactor
+        Storm
+        CriticalFlowRate
+        FloodDamage
     end
     
     methods
-        function FloodDamage = CalculateFloodDamage(obj)
-            %FloodDamage = sum(Alphai * NumberOfUnitsi * MaximumDamagePerUniti);
+        function obj = CalculateFloodDamage(obj, FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor)
+            obj.FloodDamage = ...
+                CalculateDamageFactorAgricultureRecreationAirports(FloodDepth) + ...
+                CalculateDamageFactorPumpingStations(FloodDepth) + ...
+                CalculateDamageFactorVehicles(FloodDepth) + ...
+                CalculateDamageFactorRoadRailways(FloodDepth) + ...
+                CalculateDamageFactorGasWaterMains(FloodDepth) + ...
+                CalculateDamageFactorElectricityCommunication(FloodDepth) + ...
+                CalculateDamageFactorCompanies(FloodDepth) + ...
+                CalculateDamageSingleHomesAndFarms(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate) + ...
+                CalculateDamageLowRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor) + ...
+                CalculateDamageFactorMediumRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor) + ...
+                CalaculateDamgaFactorHighRise(FloodDepth, FlowRate, CriticalFlowRate, Storm, ShelterFactor);
         end
         
-        function DamageFactorAgricultureRecreationAirports = CalculateDamageFactorForAgricultureRecraetionAirports(obj, FloodDepth)
+        function DamageFactorAgricultureRecreationAirports = CalculateDamageFactorAgricultureRecreationAirports(obj, FloodDepth)
             DamageFactorAgricultureRecreationAirports = min([FloodDepth, 0.24 * FloodDepth + 0.4, 0.07 * FloodDepth + 0.75, 1]);
         end
         
-        function DamageFactorPumpingStations = CalculateDamageFactorForPumpingStations(obj, FloodDepth)
+        function DamageFactorPumpingStations = CalculateDamageFactorPumpingStations(obj, FloodDepth)
             DamageFactorPumpingStations = min([0.9 * FloodDepth, 0.26 * FloodDepth + 0.28, 1]);
         end
         
-        function DamageFactorVehicles = CalculateDamageFactorForVehicles(obj, FloodDepth)
+        function DamageFactorVehicles = CalculateDamageFactorVehicles(obj, FloodDepth)
             DamageFactorVehicles = min([0.17 * FloodDepth - 0.03, 0.72 * FloodDepth -0.3, 0.31 * FloodDepth + 0.1, 1]);
         end
         
@@ -26,7 +46,7 @@ classdef SchadeModel
             DamageFactorRoadAndRailways = min([0.28 * FloodDepth, 0.18 * FloodDepth + 0.1, 1]);
         end
         
-        function DamageFactorMainsGasWater = CalculateDamageGasWaterMains(obj, FloodDepth)
+        function DamageFactorMainsGasWater = CalculateDamageFactorGasWaterMains(obj, FloodDepth)
             DamageFactorMainsGasWater = min([0.8 * FloodDepth, 0.23 * FloodDepth + 0.18, 0.10 * FloodDepth + 0.52, 1]);
         end
         
@@ -48,7 +68,58 @@ classdef SchadeModel
             end
         end
         
-        function DamageHouseholdContents = CalculateDamageContentsHousehold(FloodDepth,FlowRate,RiseRate,ShelterFactor,Storm,CriticalFlowRate)
+        function DamageSingleHomesAndFarms = CalculateDamageSingleHomesAndFarms(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate)
+            GuilderEuroRatio = 215500 / 315500;
+            DamageSingleHomesAndFarms = GuilderEuroRatio * CalculateDamageHouse(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate) + (1 - GuilderEuroRatio) * CalculateDamageContentsHousehold(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate);
+        end
+        
+        function DamageFactorLowRise = CalculateDamageLowRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor)
+            if FloodDepth <= 0
+                alpha = 0;
+            elseif FlowRate > 0.25 * CriticalFlowRate
+                alpha = 1;
+            elseif Storm ~= 0 %s <> 0 {ja} then begin
+                StormFactor = (0.8E-3 * FloodDepth^1.8 * ShelterFactor );
+            else
+                StormFactor = 0;
+            end
+            s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([ 0, min([ FloodDepth, 6 ]) ]) / 6 )^4 );
+            alpha = max([0, min([1, s1]) ]);
+            DamageFactorLowRise =  alpha;
+        end
+        
+        function DamageFactorMediumRise = CalculateDamageFactorMediumRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor)
+            if FloodDepth <= 0
+                alpha = 0;
+                if FlowRate > CriticalFlowRate
+                    alpha = 1;
+                elseif Storm ~= 0
+                    StormFactor = 0.8E-3 * FloodDepth^1.8 * ShelterFactor;  %Something might be wrong. '> 0.5' was added to the end of the sourcefile;
+                else
+                    StormFactor = 0;
+                end
+                s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([0,min([ FloodDepth, 12 ]) /12 ]))^4);
+                alpha = max([0, min([1, s1]) ]);
+                DamageFactorMediumRise = alpha;
+            end
+        end
+        
+        function DamageFactorHighRise = CalaculateDamgaFactorHighRise(FloodDepth, FlowRate, CriticalFlowRate, Storm, ShelterFactor)
+            if FloodDepth <= 0
+                alpha = 0;
+            elseif FlowRate > CriticalFlowRate
+                alpha = 1;
+            elseif Storm ~=  0
+                StormFactor = 0.4E-3 * FloodDepth^1.8 * ShelterFactor;
+            else
+                StormFactor = 0;
+            end
+            s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([0,min([ FloodDepth, 18 ]) ]) / 18 )^4 );
+            alpha = max([ 0 , min([1, s1]) ]);
+            DamageFactorHighRise = alpha;
+        end
+        
+     function DamageHouseholdContents = CalculateDamageContentsHousehold(FloodDepth,FlowRate,RiseRate,ShelterFactor,Storm,CriticalFlowRate)
             if FloodDepth <= 0
                 rs = 0;
             elseif FloodDepth >= 5
@@ -100,57 +171,6 @@ classdef SchadeModel
                 rs = StormFactor*1+(1-StormFactor)*rs;
             end
             DamageHouse = max([0, min([1, rs]) ]);
-        end
-        
-        function DamageSingleHomesAndFarms = CalaculateDamageSingleHomesAndFarms(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate)
-            GuilderEuroRatio = 215500 / 315500;
-            DamageSingleHomesAndFarms = GuilderEuroRatio * CalculateDamageHouse(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate) + (1 - GuilderEuroRatio) * CalculateDamageContentsHousehold(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate);
-        end
-        
-        function DamageFactorLowRise = CalculateDamageLowRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor)
-            if FloodDepth <= 0
-                alpha = 0;
-            elseif FlowRate > 0.25 * CriticalFlowRate
-                alpha = 1;
-            elseif Storm ~= 0 %s <> 0 {ja} then begin
-                StormFactor = (0.8E-3 * FloodDepth^1.8 * ShelterFactor );
-            else
-                StormFactor = 0;
-            end
-            s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([ 0, min([ FloodDepth, 6 ]) ]) / 6 )^4 );
-            alpha = max([0, min([1, s1]) ]);
-            DamageFactorLowRise =  alpha;
-        end
-        
-        function DamageFactorMediumRise = CalculateDamageFactorMediumRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor)
-            if FloodDepth <= 0
-                alpha = 0;
-                if FlowRate > CriticalFlowRate
-                    alpha = 1;
-                elseif Storm ~= 0
-                    StormFactor = 0.8E-3 * FloodDepth^1.8 * ShelterFactor;  %Something might be wrong. '> 0.5' was added to the end of the sourcefile;
-                else
-                    StormFactor = 0;
-                end
-                s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([0,min([ FloodDepth, 12 ]) /12 ]))^4);
-                alpha = max([0, min([1, s1]) ]);
-                DamageFactorMediumRise = alpha;
-            end
-        end
-        
-        function DamageFactorHighRise = CalaculateDamgaFactorHighRise(FloodDepth, FlowRate, CriticalFlowRate, Storm, ShelterFactor)
-            if FloodDepth <= 0
-                alpha = 0;
-            elseif FlowRate > CriticalFlowRate
-                alpha = 1;
-            elseif Storm ~=  0
-                StormFactor = 0.4E-3 * FloodDepth^1.8 * ShelterFactor;
-            else
-                StormFactor = 0;
-            end
-            s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([0,min([ FloodDepth, 18 ]) ]) / 18 )^4 );
-            alpha = max([ 0 , min([1, s1]) ]);
-            DamageFactorHighRise = alpha;
-        end
+        end    
     end
 end
