@@ -9,6 +9,7 @@ classdef River
         HeightWinterDike                        % m+NAP
         BottomHeightSummerBed       % m+NAP
         BottomHeightWinterBed          % m+NAP
+       Gradient                                             % m/m
         % Riverflow
         FlowTotal                                          % in m3/s
         
@@ -17,7 +18,6 @@ classdef River
         GravityConstant = 9.81;               % gravitatie constante in m/s2
         PressureAtmosphere = 10^5;   % atmosferische druk in N/m2
         Rho = 1000;                                       % dichtheid water in kg/m3
-        Gradient = 0.18*10.^-3;               % m/m
 
         % get properties
         WidthRiverTotal                             % in meters
@@ -62,12 +62,12 @@ classdef River
                 .*sqrt(obj.Gradient))).^(2./3);
         end
         
-        function ReturnValueWaterHeigthWinterBed = get.WaterHeightWinterBed(obj)
-            ReturnValueWaterHeigthWinterBed = ((obj.FlowTotal - obj.MaximumFlowSummerBed) ./ ...
-                (obj.WidthRiverTotal .* sqrt( obj.GravityConstant ./ obj.ChezyCoefficient) .* sqrt( obj.Gradient))).^(2./3);
+        function ReturnValueWaterHeightWinterBed = get.WaterHeightWinterBed(obj)
+            ReturnValueWaterHeightWinterBed = ((obj.FlowTotal - obj.MaximumFlowSummerBed) ./ ...
+                (obj.WidthRiverTotal .* sqrt( obj.GravityConstant  ./ obj.ChezyCoefficient) .* sqrt( obj.Gradient ))) .^(2 ./ 3);
         end
         
-        function [ Pressure, HeightSummerBed, HeightWinterBed ] = CalculatePressureAndWaterHeigth(obj)
+        function [ Pressure, HeightSummerBed, HeightWinterBed ] = CalculatePressureAndWaterHeight(obj)
             %Creëren van nulvectoren voor de resultaat-vectoren
             HeightSummerBed = zeros(1,300);
             HeightWinterBed = zeros(1,300);

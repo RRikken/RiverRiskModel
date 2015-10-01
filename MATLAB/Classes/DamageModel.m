@@ -1,4 +1,4 @@
-classdef SchadeModel
+classdef DamageModel
     %SCHADEMODEL Dit model berekend de overstromingsschade in een dijkringgebied
     %   Detailed explanation goes here
     
