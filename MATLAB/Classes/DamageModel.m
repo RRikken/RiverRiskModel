@@ -14,7 +14,31 @@ classdef DamageModel
         FloodDamage
     end
     
-    methods
+    methods (Static)
+       function [TypeOfLandUsage, MaximumDamage ] =  ChangeLandUsageToStandardModelTypes(LandUsage, DamageCategoryTable)
+            
+            [Rows,Columns] = size(LandUsage);
+            TypeOfLandUsage = zeros(Rows,Columns);
+            MaximumDamage = zeros(Rows,Columns);
+            
+            for  RowIndex = 1:Rows
+                for ColumnIndex = 1:Columns
+                    if isnan(LandUsage(RowIndex, ColumnIndex))
+                        TypeOfLandUsage(RowIndex, ColumnIndex) = NaN;
+                        MaximumDamage(RowIndex, ColumnIndex) = NaN;
+                    else
+                        TableRow = DamageCategoryTable.DataInputModel == LandUsage(RowIndex, ColumnIndex);
+                        TableVars = {'StandardModel', 'MaximalDamage'};
+                        NewData = DamageCategoryTable(TableRow, TableVars);
+                        TypeOfLandUsage(RowIndex, ColumnIndex) = NewData.StandardModel;
+                        MaximumDamage(RowIndex, ColumnIndex) = NewData.MaximalDamage;
+                    end
+                end
+            end
+       end
+    end
+    
+    methods    
         function TotalDamage = CalculateStandardDamageModel(obj, DamageFactors, MaximumDamageValue, NumberOfUnits)
             TotalDamageArray = DamageFactors .* MaximumDamageValue .* NumberOfUnits;
             TotalDamage = sum(sum( TotalDamageArray, 'omitnan'), 'omitnan');
@@ -67,23 +91,6 @@ classdef DamageModel
                         otherwise
                             DamageFactors(RowIndex, ColumnIndex) = NaN;
                     end
-                end
-            end
-        end
-
-        function [TypeOfLandUsage, MaximumDamage ] =  ChangeLandUsageToStandardModelTypes(obj, LandUsage, DamageCategoryTable)
-            
-            [Rows,Columns] = size(LandUsage);
-            TypeOfLandUsage = zeros(Rows,Columns);
-            MaximumDamage = zeros(Rows,Columns);
-            
-            for  RowIndex = 1:Rows
-                for ColumnIndex = 1:Columns
-                    TableRow = DamageCategoryTable.DataInputModel == LandUsage(RowIndex, ColumnIndex);
-                    TableVars = {'StandardModel', 'MaximalDamage'};
-                    NewData = DamageCategoryTable(TableRow, TableVars);
-                    TypeOfLandUsage(RowIndex, ColumnIndex) = NewData.StandardModel;
-                    MaximumDamage(RowIndex, ColumnIndex) = NewData.MaximalDamage;
                 end
             end
         end
