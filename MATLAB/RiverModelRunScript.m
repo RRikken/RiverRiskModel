@@ -1,3 +1,6 @@
+%% Init workers for Parpool
+gcp;
+
 %% Load all of the data files
 Directory = 'Data\*.*';
 FileNames = dir(Directory);
@@ -43,7 +46,20 @@ DamageModelOne = DamageModel;
 [ Pressure5_1, WaterHeightSummerBed5_1, WaterHeightWinterBed5_1 ] = RiverModel5_1.CalculatePressureAndWaterHeight;
 [ Pressure5_2, WaterHeightSummerBed5_2, WaterHeightWinterBed5_2 ] = RiverModel5_2.CalculatePressureAndWaterHeight;
 
-[TypeOfLandUsage, MaximumDamage ] =  DamageModelOne.ChangeLandUsageToStandardModelTypes(DikeRingArea43.Landusage, MaximumDamageLookupTable);
+%[TypeOfLandUsage, MaximumDamage ] =  DamageModelOne.ChangeLandUsageToStandardModelTypes(DikeRingArea43.Landusage, MaximumDamageLookupTable);
 
 FloodDepthMap = DikeRingArea43.CalculateFloodDepth(6);
 DikeRingArea43.PlotArea(FloodDepthMap);
+
+[ Rows, Columns ] = size(FloodDepthMap);
+FlowRate = zeros(Rows, Columns) + 1;
+CriticalFlowRate = zeros(Rows, Columns) + 8; 
+ShelterFactor = zeros(Rows, Columns);
+Storm = 0;
+
+DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
+
+ NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
+ 
+[TotalDamage, DamageMap] = DamageModelOne.CalculateStandardDamageModel(DamageFactorsMap, MaximumDamage, NumberOfUnits);
+
