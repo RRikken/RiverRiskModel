@@ -6,8 +6,8 @@ classdef DamageModel
         NumberOfUnitsTable
         MaximumDamageTable
         FloodDepth
-        FlowRate 
-        RiseRate 
+        FlowRate
+        RiseRate
         ShelterFactor
         Storm
         CriticalFlowRate
@@ -15,19 +15,77 @@ classdef DamageModel
     end
     
     methods
-        function obj = CalculateFloodDamage(obj, FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor)
-            obj.FloodDamage = ...
-                CalculateDamageFactorAgricultureRecreationAirports(FloodDepth) + ...
-                CalculateDamageFactorPumpingStations(FloodDepth) + ...
-                CalculateDamageFactorVehicles(FloodDepth) + ...
-                CalculateDamageFactorRoadRailways(FloodDepth) + ...
-                CalculateDamageFactorGasWaterMains(FloodDepth) + ...
-                CalculateDamageFactorElectricityCommunication(FloodDepth) + ...
-                CalculateDamageFactorCompanies(FloodDepth) + ...
-                CalculateDamageSingleHomesAndFarms(FloodDepth,FlowRate,w,ShelterFactor,Storm,CriticalFlowRate) + ...
-                CalculateDamageLowRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor) + ...
-                CalculateDamageFactorMediumRise(FloodDepth, FlowRate, Storm, CriticalFlowRate, ShelterFactor) + ...
-                CalaculateDamgaFactorHighRise(FloodDepth, FlowRate, CriticalFlowRate, Storm, ShelterFactor);
+        function TotalDamage = CalculateStandardDamageModel(obj, DamageFactors, MaximumDamageValue, NumberOfUnits)
+            TotalDamageArray = DamageFactors .* MaximumDamageValue .* NumberOfUnits;
+            TotalDamage = sum(sum( TotalDamageArray, 'omitnan'), 'omitnan');
+        end
+        
+        function DamageFactors = SelectDamageFunction(obj, LandUsage, FloodDepth, FlowRate, CriticalFlowRate, ShelterFactor, Storm)
+            [Rows,Columns] = size(LandUsage);
+            DamageFactors = zeros(Rows,Columns);
+            
+            for  RowIndex = 1:Rows
+                for ColumnIndex = 1:Columns
+                    switch LandUsage(RowIndex, ColumnIndex)
+                        case 1
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageFactorAgricultureRecreationAirports(FloodDepth(RowIndex, ColumnIndex));
+                        case 2
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageFactorPumpingStations(FloodDepth(RowIndex, ColumnIndex));
+                        case 3
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageFactorVehicles(FloodDepth(RowIndex, ColumnIndex));
+                        case 4
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageFactorRoadRailways(FloodDepth(RowIndex, ColumnIndex));
+                        case 5
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageFactorGasWaterMains(FloodDepth(RowIndex, ColumnIndex));
+                        case 6
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageFactorElectricityCommunication(FloodDepth(RowIndex, ColumnIndex));
+                        case 7
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageFactorCompanies(FloodDepth(RowIndex, ColumnIndex));
+                        case 8
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageSingleHomesAndFarms(FloodDepth(RowIndex, ColumnIndex),FlowRate(RowIndex, ColumnIndex) ...
+                                ,w(RowIndex, ColumnIndex),ShelterFactor(RowIndex, ColumnIndex),Storm,CriticalFlowRate(RowIndex, ColumnIndex));
+                        case 9
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageLowRise(FloodDepth(RowIndex, ColumnIndex), FlowRate(RowIndex, ColumnIndex) ...
+                                , Storm, CriticalFlowRate(RowIndex, ColumnIndex), ShelterFactor(RowIndex, ColumnIndex));
+                        case 10
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalculateDamageFactorMediumRise(FloodDepth(RowIndex, ColumnIndex), FlowRate(RowIndex, ColumnIndex) ...
+                                , Storm, CriticalFlowRate(RowIndex, ColumnIndex), ShelterFactor(RowIndex, ColumnIndex));
+                        case 11
+                            DamageFactors(RowIndex, ColumnIndex) = ...
+                                CalaculateDamgaFactorHighRise(FloodDepth(RowIndex, ColumnIndex), FlowRate(RowIndex, ColumnIndex) ...
+                                , CriticalFlowRate(RowIndex, ColumnIndex), Storm, ShelterFactor(RowIndex, ColumnIndex));
+                        otherwise
+                            DamageFactors(RowIndex, ColumnIndex) = NaN;
+                    end
+                end
+            end
+        end
+
+        function [TypeOfLandUsage, MaximumDamage ] =  ChangeLandUsageToStandardModelTypes(obj, LandUsage, DamageCategoryTable)
+            
+            [Rows,Columns] = size(LandUsage);
+            TypeOfLandUsage = zeros(Rows,Columns);
+            MaximumDamage = zeros(Rows,Columns);
+            
+            for  RowIndex = 1:Rows
+                for ColumnIndex = 1:Columns
+                    TableRow = DamageCategoryTable.DataInputModel == LandUsage(RowIndex, ColumnIndex);
+                    TableVars = {'StandardModel', 'MaximalDamage'};
+                    NewData = DamageCategoryTable(TableRow, TableVars);
+                    TypeOfLandUsage(RowIndex, ColumnIndex) = NewData.StandardModel;
+                    MaximumDamage(RowIndex, ColumnIndex) = NewData.MaximalDamage;
+                end
+            end
         end
         
         function DamageFactorAgricultureRecreationAirports = CalculateDamageFactorAgricultureRecreationAirports(obj, FloodDepth)
@@ -119,7 +177,7 @@ classdef DamageModel
             DamageFactorHighRise = alpha;
         end
         
-     function DamageHouseholdContents = CalculateDamageContentsHousehold(FloodDepth,FlowRate,RiseRate,ShelterFactor,Storm,CriticalFlowRate)
+        function DamageHouseholdContents = CalculateDamageContentsHousehold(FloodDepth,FlowRate,RiseRate,ShelterFactor,Storm,CriticalFlowRate)
             if FloodDepth <= 0
                 rs = 0;
             elseif FloodDepth >= 5
@@ -171,6 +229,6 @@ classdef DamageModel
                 rs = StormFactor*1+(1-StormFactor)*rs;
             end
             DamageHouse = max([0, min([1, rs]) ]);
-        end    
+        end
     end
 end

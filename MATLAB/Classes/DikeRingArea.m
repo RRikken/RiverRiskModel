@@ -8,6 +8,8 @@ classdef DikeRingArea
         AverageHeightMap
         MaximumHeightMap
         Inhabitants
+        
+        
     end
     
     methods
