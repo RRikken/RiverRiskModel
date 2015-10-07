@@ -8,15 +8,27 @@ classdef DikeRingArea
         AverageHeightMap
         MaximumHeightMap
         Inhabitants
-        
-        
     end
     
     methods
-        function PlotArea(obj)
-            
-            [n_Y,n_X] = size(obj.Landusage);
-            surf([1:n_X], [1:n_Y],flipud(obj.AverageHeightMap),'EdgeColor','none'); view(2); colorbar; axis equal;
+        function obj = DikeRingArea(Number, Landusage, AverageHeightMap, MaximumHeightMap, Inhabitants)
+            obj.Number = Number;
+            obj.Landusage = Landusage;
+            obj.AverageHeightMap = AverageHeightMap;
+            obj.MaximumHeightMap = MaximumHeightMap;
+            obj.Inhabitants = Inhabitants;
+        end
+        
+        function FloodDepth = CalculateFloodDepth(obj, FloodDepth)
+            FloodDepth = FloodDepth - obj.AverageHeightMap;
+            FloodDepth(FloodDepth < 0) = 0;
+        end
+    end
+    
+    methods(Static)
+        function PlotArea(HeigthMap)
+            [n_Y,n_X] = size(HeigthMap);
+            surf([1:n_X], [1:n_Y],flipud(HeigthMap),'EdgeColor','none'); view(2); colorbar; axis equal;
             axis([0 1000 -100 300])
             xlabel('x (100 m)')
             ylabel('y (100 m)')
