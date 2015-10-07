@@ -30,6 +30,16 @@ classdef River
     end
     
     methods
+        function obj = River(WidthSummerBed, WidthWinterBed, HeightWinterDike, BottomHeightSummerBed, BottomHeightWinterBed, Gradient, FlowTotal)
+            obj.WidthSummerBed = WidthSummerBed;
+            obj.WidthWinterBed  = WidthWinterBed;
+            obj.HeightWinterDike  = HeightWinterDike; 
+            obj.BottomHeightSummerBed = BottomHeightSummerBed;
+            obj.BottomHeightWinterBed = BottomHeightWinterBed;
+            obj.Gradient = Gradient;
+            obj.FlowTotal = FlowTotal;
+        end
+        
         function ReturnValueWidthRiverTotal = get.WidthRiverTotal(obj)
             ReturnValueWidthRiverTotal = obj.WidthSummerBed + obj.WidthWinterBed;
         end
