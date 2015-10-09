@@ -30,10 +30,10 @@ clear ProfileDataRow5_2 ProfileDataRow5_1
 % - Kolom 6: Gemiddeld verhang i (m/km)
 
 RiverModel5_1 = River(DataForLocation5_1(2), DataForLocation5_1(4), 12.6, DataForLocation5_1(3), DataForLocation5_1(5), ...
-    DataForLocation5_1(6), [0:50:14000]);
+    DataForLocation5_1(6)  * 10^-3, [0:50:14000]);
 
 RiverModel5_2 = River(DataForLocation5_2(2), DataForLocation5_2(4), 7.5, DataForLocation5_2(3), DataForLocation5_2(5), ...
-    DataForLocation5_2(6), [0:50:8000]);
+    DataForLocation5_2(6) * 10^-3, [0:50:8000]);
 
 %% Initialize dike breach model
 % TODO: add to script

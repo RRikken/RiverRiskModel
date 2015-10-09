@@ -73,10 +73,13 @@ classdef River
         end
         
         function ReturnValueWaterHeightWinterBed = get.WaterHeightWinterBed(obj)
-            ReturnValueWaterHeightWinterBed = ((obj.FlowTotal - obj.MaximumFlowSummerBed) ./ ...
-                (obj.WidthRiverTotal .* sqrt( obj.GravityConstant  ./ obj.ChezyCoefficient) .* sqrt( obj.Gradient ))) .^(2 ./ 3);
+            FlowThroughWinterBed = obj.FlowTotal - obj.MaximumFlowSummerBed;
+            CheckForNegativeValues = FlowThroughWinterBed < 0;
+            GravityDividedByChezy = obj.GravityConstant  ./ obj.ChezyCoefficient;
+            ReturnValueWaterHeightWinterBed = ((FlowThroughWinterBed) ./ (obj.WidthRiverTotal .* sqrt( GravityDividedByChezy ) .* sqrt( obj.Gradient ))) .^(2 / 3);
+            ReturnValueWaterHeightWinterBed(CheckForNegativeValues) = 0;
         end
-        
+     
         function [ Pressure, HeightSummerBed, HeightWinterBed ] = CalculatePressureAndWaterHeight(obj)
             %Creëren van nulvectoren voor de resultaat-vectoren
             HeightSummerBed = zeros(1,300);
