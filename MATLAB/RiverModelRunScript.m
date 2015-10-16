@@ -49,17 +49,41 @@ DamageModelOne = DamageModel;
 %[TypeOfLandUsage, MaximumDamage ] =  DamageModelOne.ChangeLandUsageToStandardModelTypes(DikeRingArea43.Landusage, MaximumDamageLookupTable);
 
 FloodDepthMap = DikeRingArea43.CalculateFloodDepth(6);
-DikeRingArea43.PlotArea(FloodDepthMap);
+% DikeRingArea43.PlotArea(FloodDepthMap);
 
 [ Rows, Columns ] = size(FloodDepthMap);
 FlowRate = zeros(Rows, Columns) + 1;
 CriticalFlowRate = zeros(Rows, Columns) + 8; 
 ShelterFactor = zeros(Rows, Columns);
 Storm = 0;
+WaterContainerMap = cell(Rows, Columns);
 
-DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
+% Define inflow for dikebreaches 
+% Bernardsluis 119, 584
+DikeBreachCoordinates = [118, 583;  118, 584; 118, 585];
+% for i = 1 : length(DikeBreachCoordinates);
+%     Row = DikeBreachCoordinates(i,1); 
+%     Column = DikeBreachCoordinates(i,2);
+    AreaSize = 100 * 100;
+%     WaterContainerMap{Row, Column} = WaterContainer(Row, Column, ahn100_gem(Row, Column), AreaSize);
+% end
 
+
+for Row = 1: Rows
+    for Column = 1 : Columns
+        if isnan(ahn100_gem(Row, Column)) == 0
+            WaterContainerMap{Row, Column} = WaterContainer(Row, Column, ahn100_gem(Row, Column), AreaSize);
+        end
+    end
+end
+WaterContainerMap{118, 583}.InFlow = [NaN; NaN; NaN; 1000];
+Waterlevels = WaterContainerMap{118, 583}.CheckSurroundingWaterLevels(WaterContainerMap);
+[ RowValuesSortedArray, AllWaterLevels ] = WaterContainerMap{118, 583}.CalculateVolumeForContainer(Waterlevels);
+WaterOutflowVolumes = WaterContainerMap{118, 583}.DetermineOutflows(RowValuesSortedArray, AllWaterLevels);
+
+% DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
+% 
  NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
- 
-[TotalDamage, DamageMap] = DamageModelOne.CalculateStandardDamageModel(DamageFactorsMap, MaximumDamage, NumberOfUnits);
+%  
+% [TotalDamage, DamageMap] = DamageModelOne.CalculateStandardDamageModel(DamageFactorsMap, MaximumDamage, NumberOfUnits);
 
