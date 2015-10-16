@@ -6,6 +6,10 @@ classdef DikeBreach
     end
     
     methods
+        %% Afschuiving
+        function SafetyFactor = CalculateStability(obj, ShearStress, , Radius, Gravitation, 
+      
+        %%Sellmeijer Piping midel
         function WaterHeightDifference = CalculateSellmeijer(obj, SeepageLength, ThicknessSandLayer, RollResistanceAngle, TowForceFactor, WeightGrainUnderwater, WeightWater, IntrinsicConductivity, PercentileSand)
             Alpha = CalculateAlpha(ThicknessSandLayer, SeepageLength);
             Beta = CalculateBeta(TowForceFactor, PercentileSand, IntrinsicConductivity, SeepageLength);
@@ -20,6 +24,4 @@ classdef DikeBreach
             Beta = TowForceFactor*PercentileSand*(1/(IntrinsicConductivity*SeepageLength))^(1/3);
         end
     end
-    
 end
-
