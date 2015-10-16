@@ -22,8 +22,8 @@ clear, clc
 %% Inladen data
 Profielen_tabel = load('Profielen.txt');
 
-profiel_1_2 = Profielen_tabel(11,:) % Locatie 1.2 is eerste rij in bestand van profielen
-b1_1_2 = profiel_1_2(2) % Breedte zomerbed is tweede kolom in tabel (zie uitleg hierboven)
+profiel_1_2 = Profielen_tabel(11,:); % Locatie 1.2 is eerste rij in bestand van profielen
+b1_1_2 = profiel_1_2(2); % Breedte zomerbed is tweede kolom in tabel (zie uitleg hierboven)
 h_max = 10; % Bepaal zelf een maximale waterhoogte of debiet
 
 %% Figuur plotten
@@ -48,9 +48,21 @@ grav = 9.81;                     % gravitatie constante in m/s2
 P_atm = 10^5;                    % atmosferische druk in N/m2
 Rho = 1000;                      % dichtheid water in kg/m3
 
+
+%Wave = 'afvoergolf.xlsx';
+
+%WaterDischarge = 'B3:B23';
+
+%WaveLobith = xlsread(Wave,WaterDischarge);
+
+WaveLobith=[4362;5676;6616;7794;9421;11812;14561;15433;15749;15936;16000;15946;15781;15508;14704;12457;10480;9052;8077;7342;6046]*(2/3);               %verdeling rijntakken
+WaveLength = length(WaveLobith);
+
+
 %Afvoerverdeling via verschillende rijntakken
-Q_Lobith = [0:50:21000];                                                    % in m3/s
-k = 1./3;                                                                   %1/3 van de Rijn stroomt naar de Waal
+WaveLobith;
+%Q_Lobith = [0:50:21000];                                                    % in m3/s
+k = 2./3;                                                                   %1/3 van de Rijn stroomt naar de Waal
 %Omzetten bodemhoogtes naar diepte
 diepte_zomerbed = bodemhoogte_winterbed-bodemhoogte_zomerbed;
 diepte_winterbed = hoogte_winterdijk-bodemhoogte_winterbed;
@@ -61,13 +73,14 @@ Qmax_winterbed_zomerbed = (breedte_totaal.*(diepte_winterbed).^1.5).*sqrt((grav.
 Qmax = Qmax_zomerbed + Qmax_winterbed_zomerbed;
 
 %waterhoogte berekening
-waterhoogte_zomerbed = (Q_Lobith./(breedte_zomerbed.*sqrt(grav./Cf).*sqrt(verhang))).^(2./3);      
-waterhoogte_winterbed= ((Q_Lobith-Qmax_zomerbed)./(breedte_totaal.*sqrt(grav./Cf).*sqrt(verhang))).^(2./3);
+waterhoogte_zomerbed = (WaveLobith./(breedte_zomerbed.*sqrt(grav./Cf).*sqrt(verhang))).^(2./3);      
+waterhoogte_winterbed= ((WaveLobith-Qmax_zomerbed)./(breedte_totaal.*sqrt(grav./Cf).*sqrt(verhang))).^(2./3);
 
 %Nulvectoren gemaakt
-hoogte_zomerbed = zeros(1,500);
-hoogte_winterbed = zeros(1,500);
-P = zeros(1,500);
+hoogte_zomerbed = zeros(1,WaveLength)';
+hoogte_winterbed = zeros(1,WaveLength)';
+P = zeros(1,WaveLength)';
+T = zeros(1,WaveLength)';
 
 %Constanten voor bepaling terugkeertijd in jaren bepaalde afvoer
 a = 1316.4;                                                                 %komt uit TRontwerp pag.76-77 (2001)
@@ -75,15 +88,15 @@ c = 6612.6;
 
 %Model
 
-for i = 1:length(Q_Lobith)
+for i = 1:length(WaveLobith)
     
-if Q_Lobith(i) <= Qmax_zomerbed
+if WaveLobith(i) <= Qmax_zomerbed
     hoogte_zomerbed(i) = bodemhoogte_zomerbed + waterhoogte_zomerbed(i);
-elseif Q_Lobith(i) >= Qmax_zomerbed
+elseif WaveLobith(i) >= Qmax_zomerbed
     hoogte_winterbed(i) = bodemhoogte_winterbed + waterhoogte_winterbed(i);
 end
 
-if Q_Lobith(i) > Qmax
+if WaveLobith(i) > Qmax
     hoogte_winterbed(i) = hoogte_winterdijk;
 end
 
@@ -92,13 +105,18 @@ if hoogte_winterbed(i) >= bodemhoogte_winterbed
 else
     P(i) = P_atm;
 end
-T(i) = exp((Q_Lobith(i)-k.*c)./(k.*a));                                     
+T(i) = exp((WaveLobith(i)-k.*c)./(k.*a));                                     
 end
 
+TableForExcel = table(WaveLobith, hoogte_zomerbed, hoogte_winterbed, P, T, ...
+    'VariableNames',{'Flow' 'WaterHeigtSummerBed' 'WaterHeightSummerWinterBed' 'Pressure' 'RepetitionTime'});
 
 %data naar excel sturen
-xlswrite('locatie5_1.xlsx', Q_Lobith', 'output', 'a2')
-xlswrite('locatie5_1.xlsx', hoogte_zomerbed', 'output', 'b2')
-xlswrite('locatie5_1.xlsx', hoogte_winterbed', 'output', 'c2')
-xlswrite('locatie5_1.xlsx', P', 'output', 'd2')
-xlswrite('locatie5_1.xlsx', T', 'output', 'e2')
+filename = 'data5_1.xlsx';
+writetable(TableForExcel,filename,'Sheet',1,'Range','A2')
+
+%xlswrite('locatie5_1.xlsx', Q_Lobith', 'output', 'a2')
+%xlswrite('locatie5_1.xlsx', hoogte_zomerbed', 'output', 'b2')
+%xlswrite('locatie5_1.xlsx', hoogte_winterbed', 'output', 'c2')
+%xlswrite('locatie5_1.xlsx', P', 'output', 'd2')
+%xlswrite('locatie5_1.xlsx', T', 'output', 'e2')
