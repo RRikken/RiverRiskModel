@@ -1,5 +1,5 @@
 %% Init workers for Parpool
-gcp;
+% gcp;
 
 %% Load all of the data files
 Directory = 'Data\*.*';
@@ -78,6 +78,7 @@ end
 
 DikeBreachLocations = [118, 583; 118, 584; 118, 585];
 UpdateList = DikeBreachLocations;
+BreachFlow = zeros(1,1000) + 1000;
 for TimeStep = 1 : length(BreachFlow)
     for Ind = 1 : length(DikeBreachLocations)
         InflowIntoSingleCell = BreachFlow(TimeStep)/length(DikeBreachLocations(:,1));
@@ -85,10 +86,7 @@ for TimeStep = 1 : length(BreachFlow)
     end
     
     for RowNr = 1 : length(UpdateList)
-
-        Waterlevels = WaterContainerMap(118, 583).CheckSurroundingWaterLevels(WaterContainerMap);
-        [ RowValuesSortedArray, AllWaterLevels ] = WaterContainerMap(118, 583).CalculateVolumeForContainer(Waterlevels);
-        WaterOutflowVolumes = WaterContainerMap(118, 583).DetermineOutflows(RowValuesSortedArray, AllWaterLevels);
+       [WaterContainerMap, UpdateList] = WaterContainerMap(DikeBreachLocations(Ind,1),DikeBreachLocations(Ind,2)).CalculateOutFlows(UpdateList, WaterContainerMap);
     end
     
 end

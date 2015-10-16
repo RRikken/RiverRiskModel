@@ -41,6 +41,14 @@ classdef WaterContainer
             ReturnedWaterLevel = obj.BottomHeight + obj.WaterHeight;
         end
         
+        function [WaterContainerMap, UpdateList] = CalculateOutFlows(obj, UpdateList, WaterContainerMap)
+            [WaterContainerMap, Waterlevels] =obj.CheckSurroundingWaterLevels(WaterContainerMap);
+            [ RowValuesSortedArray, AllWaterLevels ] = obj.CalculateVolumeForContainer(Waterlevels);
+            WaterOutflowVolumes = obj.DetermineOutflows(RowValuesSortedArray, AllWaterLevels);
+            WaterContainerMap = OutflowToOtherContainersAndRetention( WaterOutflowVolumes, WaterContainerMap );
+            UpdateList = UpdateList + NewListItems;
+        end
+        
         function WaterContainerMap = OutflowToOtherContainersAndRetention(obj, WaterOutflowVolumes, WaterContainerMap )
             for i = 1 : length(WaterOutflowVolumes)
                 if WaterOutflowVolumes(i) > 0
@@ -60,27 +68,11 @@ classdef WaterContainer
             end
         end
         
-        function SurroundingWaterLevels = CheckSurroundingWaterLevels(obj, WaterContainerMap)
-            if isobject(WaterContainerMap{obj.RowPosition - 1, obj.ColumnPosition})
-                SurroundingWaterLevels(1,1) = WaterContainerMap{obj.RowPosition - 1, obj.ColumnPosition}.WaterLevel;
-            else
-                SurroundingWaterLevels(1,1) = NaN;
-            end
-            if isobject(WaterContainerMap{obj.RowPosition, obj.ColumnPosition - 1})
-                SurroundingWaterLevels(2,1) = WaterContainerMap{obj.RowPosition , obj.ColumnPosition - 1}.WaterLevel;
-            else
-                SurroundingWaterLevels(2,1) = NaN;
-            end
-            if isobject(WaterContainerMap{obj.RowPosition, obj.ColumnPosition + 1})
-                SurroundingWaterLevels(3,1) = WaterContainerMap{obj.RowPosition, obj.ColumnPosition + 1}.WaterLevel;
-            else
-                SurroundingWaterLevels(3,1) = NaN;
-            end
-            if isobject(WaterContainerMap{obj.RowPosition + 1, obj.ColumnPosition})
-                SurroundingWaterLevels(4,1) = WaterContainerMap{obj.RowPosition + 1, obj.ColumnPosition}.WaterLevel;
-            else
-                SurroundingWaterLevels(4,1) = NaN;
-            end
+        function [WaterContainerMap, SurroundingWaterLevels] = CheckSurroundingWaterLevels(obj, WaterContainerMap)
+                SurroundingWaterLevels(1,1) = WaterContainerMap(obj.RowPosition - 1, obj.ColumnPosition).WaterLevel;
+                SurroundingWaterLevels(2,1) = WaterContainerMap(obj.RowPosition , obj.ColumnPosition - 1).WaterLevel;
+                SurroundingWaterLevels(3,1) = WaterContainerMap(obj.RowPosition, obj.ColumnPosition + 1).WaterLevel;            
+                SurroundingWaterLevels(4,1) = WaterContainerMap(obj.RowPosition + 1, obj.ColumnPosition).WaterLevel;
         end
         
         function [ RowValuesSortedArray, AllWaterLevels ]  = CalculateVolumeForContainer(obj, SurroundingWaterLevels )
