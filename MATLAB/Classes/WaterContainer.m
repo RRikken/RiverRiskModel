@@ -10,23 +10,31 @@ classdef WaterContainer
         InFlow
         BottomHeight
         AreaSize
-       
+        
         % Get properties
         WaterHeight                                 % In meters from bottomheight
         WaterLevel                                    %
     end
     
-    methods 
+    methods
         function obj = WaterContainer(RowPosition, ColumnPosition, BottomHeight, AreaSize)
-            obj.RowPosition= RowPosition;
-            obj.ColumnPosition = ColumnPosition;
-            obj.BottomHeight = BottomHeight;
-            obj.AreaSize = AreaSize;
-            obj.WaterContents = 0;
+            if nargin==0
+                obj.RowPosition= NaN;
+                obj.ColumnPosition = NaN;
+                obj.BottomHeight = NaN;
+                obj.AreaSize = NaN;
+                obj.WaterContents = NaN;
+            else
+                obj.RowPosition= RowPosition;
+                obj.ColumnPosition = ColumnPosition;
+                obj.BottomHeight = BottomHeight;
+                obj.AreaSize = AreaSize;
+                obj.WaterContents = 0;
+            end
         end
         
         function ReturnedWaterHeight = get.WaterHeight(obj)
-            ReturnedWaterHeight = obj.WaterContents / obj.AreaSize; 
+            ReturnedWaterHeight = obj.WaterContents / obj.AreaSize;
         end
         
         function ReturnedWaterLevel = get.WaterLevel(obj)
@@ -74,7 +82,7 @@ classdef WaterContainer
                 SurroundingWaterLevels(4,1) = NaN;
             end
         end
-            
+        
         function [ RowValuesSortedArray, AllWaterLevels ]  = CalculateVolumeForContainer(obj, SurroundingWaterLevels )
             SurroundingWaterLevels(isnan(obj.InFlow) == 0) = NaN;
             AllWaterLevels = zeros(5,1);
@@ -94,12 +102,18 @@ classdef WaterContainer
         function WaterOutflowVolumes = DetermineOutflows(obj, RowValuesSortedArray, AllWaterLevels)
             WaterOutflowVolumes = zeros(length(AllWaterLevels), 1);
             WaterVolume = sum(obj.InFlow, 'omitnan');
-             DivideWaterToContainers = zeros(length(AllWaterLevels), 1);
+            DivideWaterToContainers = zeros(length(AllWaterLevels), 1);
             k = 1;
             while WaterVolume > 0
                 StepWaterVolume = ( RowValuesSortedArray(k + 1, 2) - RowValuesSortedArray(k , 2) ) * obj.AreaSize;
-                StepWaterVolumeArray = zeros(1:k) + StepWaterVolume / k;
+                VolumePerContainer = StepWaterVolume / k;
+                StepWaterVolumeArray = zeros(5,1);
+                StepWaterVolumeArray(1:k) = VolumePerContainer;
                 DivideWaterToContainers = DivideWaterToContainers + StepWaterVolumeArray;
+                WaterVolume = WaterVolume - StepWaterVolume;
+                if k > 1000
+                    debug;
+                end
             end
             
             for m = length(DivideWaterToContainers);

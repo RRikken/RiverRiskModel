@@ -56,7 +56,6 @@ FlowRate = zeros(Rows, Columns) + 1;
 CriticalFlowRate = zeros(Rows, Columns) + 8; 
 ShelterFactor = zeros(Rows, Columns);
 Storm = 0;
-WaterContainerMap = cell(Rows, Columns);
 
 % Define inflow for dikebreaches 
 % Bernardsluis 119, 584
@@ -72,14 +71,27 @@ DikeBreachCoordinates = [118, 583;  118, 584; 118, 585];
 for Row = 1: Rows
     for Column = 1 : Columns
         if isnan(ahn100_gem(Row, Column)) == 0
-            WaterContainerMap{Row, Column} = WaterContainer(Row, Column, ahn100_gem(Row, Column), AreaSize);
+            WaterContainerMap(Row, Column) = WaterContainer(Row, Column, ahn100_gem(Row, Column), AreaSize);
         end
     end
 end
-WaterContainerMap{118, 583}.InFlow = [NaN; NaN; NaN; 1000];
-Waterlevels = WaterContainerMap{118, 583}.CheckSurroundingWaterLevels(WaterContainerMap);
-[ RowValuesSortedArray, AllWaterLevels ] = WaterContainerMap{118, 583}.CalculateVolumeForContainer(Waterlevels);
-WaterOutflowVolumes = WaterContainerMap{118, 583}.DetermineOutflows(RowValuesSortedArray, AllWaterLevels);
+
+DikeBreachLocations = [118, 583; 118, 584; 118, 585];
+UpdateList = DikeBreachLocations;
+for TimeStep = 1 : length(BreachFlow)
+    for Ind = 1 : length(DikeBreachLocations)
+        InflowIntoSingleCell = BreachFlow(TimeStep)/length(DikeBreachLocations(:,1));
+        WaterContainerMap(DikeBreachLocations(Ind,1),DikeBreachLocations(Ind,2)).InFlow = [NaN; NaN; NaN; InflowIntoSingleCell];
+    end
+    
+    for RowNr = 1 : length(UpdateList)
+
+        Waterlevels = WaterContainerMap(118, 583).CheckSurroundingWaterLevels(WaterContainerMap);
+        [ RowValuesSortedArray, AllWaterLevels ] = WaterContainerMap(118, 583).CalculateVolumeForContainer(Waterlevels);
+        WaterOutflowVolumes = WaterContainerMap(118, 583).DetermineOutflows(RowValuesSortedArray, AllWaterLevels);
+    end
+    
+end
 
 % DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
 % 
