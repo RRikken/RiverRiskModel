@@ -47,22 +47,25 @@ Cf = 0.005;                      % chezy waarde zomerbed en winterbed
 grav = 9.81;                     % gravitatie constante in m/s2
 P_atm = 10^5;                    % atmosferische druk in N/m2
 Rho = 1000;                      % dichtheid water in kg/m3
+k = 2./9;                        % afvoerverdeling Rijntak
 
+Wave = 'afvoergolf.xlsx';
 
-%Wave = 'afvoergolf.xlsx';
+WaterDischarge = 'B3:B23';
 
-%WaterDischarge = 'B3:B23';
+WaveLobith = xlsread(Wave,WaterDischarge);
 
-%WaveLobith = xlsread(Wave,WaterDischarge);
+%WaveLobith=[4362;5676;6616;7794;9421;11812;14561;15433;15749;15936;16000;15946;15781;15508;14704;12457;10480;9052;8077;7342;6046]*(2/9);               %verdeling rijntakken
 
-WaveLobith=[4362;5676;6616;7794;9421;11812;14561;15433;15749;15936;16000;15946;15781;15508;14704;12457;10480;9052;8077;7342;6046]*(2/9);               %verdeling rijntakken
+%WaveLobith = WaveLobith1;
+
 WaveLength = length(WaveLobith);
 
 
 %Afvoerverdeling via verschillende rijntakken
-WaveLobith;
+WaveLobith = WaveLobith.*k;
 %Q_Lobith;                                                    % in m3/s
-k = 2./9;                                                                   %2/9 van de Rijn stroomt naar de Nederrijn
+                                                                  %2/9 van de Rijn stroomt naar de Nederrijn
 
 %Omzetten bodemhoogtes naar diepte
 diepte_zomerbed = bodemhoogte_winterbed-bodemhoogte_zomerbed;
