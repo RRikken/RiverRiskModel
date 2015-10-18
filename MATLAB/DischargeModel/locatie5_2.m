@@ -49,23 +49,16 @@ P_atm = 10^5;                    % atmosferische druk in N/m2
 Rho = 1000;                      % dichtheid water in kg/m3
 k = 2./9;                        % afvoerverdeling Rijntak
 
+%afvoer + verdeling
 Wave = 'afvoergolf.xlsx';
 
 WaterDischarge = 'B3:B23';
 
 WaveLobith = xlsread(Wave,WaterDischarge);
 
-%WaveLobith=[4362;5676;6616;7794;9421;11812;14561;15433;15749;15936;16000;15946;15781;15508;14704;12457;10480;9052;8077;7342;6046]*(2/9);               %verdeling rijntakken
-
-%WaveLobith = WaveLobith1;
-
 WaveLength = length(WaveLobith);
 
-
-%Afvoerverdeling via verschillende rijntakken
-WaveLobith = WaveLobith.*k;
-%Q_Lobith;                                                    % in m3/s
-                                                                  %2/9 van de Rijn stroomt naar de Nederrijn
+WaveLobith = WaveLobith.*k ;
 
 %Omzetten bodemhoogtes naar diepte
 diepte_zomerbed = bodemhoogte_winterbed-bodemhoogte_zomerbed;
@@ -117,9 +110,5 @@ TableForExcel = table(WaveLobith, hoogte_zomerbed, hoogte_winterbed, P, T, ...
 %data naar excel sturen
 filename = 'data5_2.xlsx';
 writetable(TableForExcel,filename,'Sheet',1,'Range','A2')
-%xlswrite('locatie5_2.xlsx', WaveLobith', 'output', 'a2')
-%xlswrite('locatie5_2.xlsx', hoogte_zomerbed', 'output', 'b2')
-%xlswrite('locatie5_2.xlsx', hoogte_winterbed', 'output', 'c2')
-%xlswrite('locatie5_2.xlsx', P', 'output', 'd2')
-%xlswrite('locatie5_2.xlsx', T', 'output', 'e2')
+
 

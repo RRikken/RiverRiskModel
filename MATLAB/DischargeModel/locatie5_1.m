@@ -47,24 +47,19 @@ Cf = 0.005;                      % chezy waarde zomerbed en winterbed. aangenome
 grav = 9.81;                     % gravitatie constante in m/s2
 P_atm = 10^5;                    % atmosferische druk in N/m2
 Rho = 1000;                      % dichtheid water in kg/m3
-k = 2./3; 
+k = 2./3;                        % afvoerverdeling Rijntak
 
+%afvoer + verdeling
 Wave = 'afvoergolf.xlsx';
 
 WaterDischarge = 'B3:B23';
 
 WaveLobith = xlsread(Wave,WaterDischarge);
 
-%WaveLobith = WaveLobith1;
-
-%WaveLobith=[4362;5676;6616;7794;9421;11812;14561;15433;15749;15936;16000;15946;15781;15508;14704;12457;10480;9052;8077;7342;6046]*(2/3);               %verdeling rijntakken
 WaveLength = length(WaveLobith);
 
-
-%Afvoerverdeling via verschillende rijntakken
 WaveLobith = WaveLobith.*k ;
-%Q_Lobith = [0:50:21000];                                                    % in m3/s
-k = 2./3;                                                                   %1/3 van de Rijn stroomt naar de Waal
+
 %Omzetten bodemhoogtes naar diepte
 diepte_zomerbed = bodemhoogte_winterbed-bodemhoogte_zomerbed;
 diepte_winterbed = hoogte_winterdijk-bodemhoogte_winterbed;
@@ -117,8 +112,3 @@ TableForExcel = table(WaveLobith, hoogte_zomerbed, hoogte_winterbed, P, T, ...
 filename = 'data5_1.xlsx';
 writetable(TableForExcel,filename,'Sheet',1,'Range','A2')
 
-%xlswrite('locatie5_1.xlsx', Q_Lobith', 'output', 'a2')
-%xlswrite('locatie5_1.xlsx', hoogte_zomerbed', 'output', 'b2')
-%xlswrite('locatie5_1.xlsx', hoogte_winterbed', 'output', 'c2')
-%xlswrite('locatie5_1.xlsx', P', 'output', 'd2')
-%xlswrite('locatie5_1.xlsx', T', 'output', 'e2')
