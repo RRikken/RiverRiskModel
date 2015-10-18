@@ -105,8 +105,10 @@ end
 T(i) = exp((WaveLobith(i)-k.*c)./(k.*a));               
 end
 
+%tabel maken
 TableForExcel = table(WaveLobith, hoogte_zomerbed, hoogte_winterbed, P, T, ...
     'VariableNames',{'Flow' 'WaterHeigtSummerBed' 'WaterHeightSummerWinterBed' 'Pressure' 'RepetitionTime'});
+
 %data naar excel sturen
 filename = 'data5_2.xlsx';
 writetable(TableForExcel,filename,'Sheet',1,'Range','A2')
