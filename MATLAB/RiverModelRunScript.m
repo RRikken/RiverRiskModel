@@ -74,19 +74,26 @@ for Row = 1: Rows
             WaterContainerMap(Row, Column) = WaterContainer(Row, Column, ahn100_gem(Row, Column), AreaSize);
         end
     end
-end
-
+ end
+%%
 DikeBreachLocations = [118, 583; 118, 584; 118, 585];
 UpdateList = DikeBreachLocations;
 BreachFlow = zeros(1,1000) + 1000;
 for TimeStep = 1 : length(BreachFlow)
     for Ind = 1 : length(DikeBreachLocations)
         InflowIntoSingleCell = BreachFlow(TimeStep)/length(DikeBreachLocations(:,1));
-        WaterContainerMap(DikeBreachLocations(Ind,1),DikeBreachLocations(Ind,2)).InFlow = [NaN; NaN; NaN; InflowIntoSingleCell];
+        WaterContainerMap(DikeBreachLocations(Ind,1),DikeBreachLocations(Ind,2)).InFlow = [DikeBreachLocations(Ind,1) + 1, DikeBreachLocations(Ind,2), InflowIntoSingleCell];
     end
     
+    % First calculate all the outflows
     for RowNr = 1 : length(UpdateList)
-       [WaterContainerMap, UpdateList] = WaterContainerMap(DikeBreachLocations(Ind,1),DikeBreachLocations(Ind,2)).CalculateOutFlows(UpdateList, WaterContainerMap);
+       [WaterContainerMap, NewListItems] = WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).CalculateOutFlows(UpdateList, WaterContainerMap);
+%         UpdateList = UpdateList + NewListItems;
+    end
+    
+    % Second, put the outflows in the correct object
+    for RowNr = 1 : length(UpdateList)
+                WaterContainerMap = WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).OutflowToOtherContainersAndRetention( WaterContainerMap );
     end
     
 end
