@@ -1,3 +1,4 @@
+clear WaterContainerMap
 %% Init workers for Parpool
 % gcp;
 
@@ -53,54 +54,58 @@ FloodDepthMap = DikeRingArea43.CalculateFloodDepth(6);
 
 [ Rows, Columns ] = size(FloodDepthMap);
 FlowRate = zeros(Rows, Columns) + 1;
-CriticalFlowRate = zeros(Rows, Columns) + 8; 
+CriticalFlowRate = zeros(Rows, Columns) + 8;
 ShelterFactor = zeros(Rows, Columns);
 Storm = 0;
 
-% Define inflow for dikebreaches 
+% Define inflow for dikebreaches
 % Bernardsluis 119, 584
 DikeBreachCoordinates = [118, 583;  118, 584; 118, 585];
-% for i = 1 : length(DikeBreachCoordinates);
-%     Row = DikeBreachCoordinates(i,1); 
-%     Column = DikeBreachCoordinates(i,2);
-    AreaSize = 100 * 100;
-%     WaterContainerMap{Row, Column} = WaterContainer(Row, Column, ahn100_gem(Row, Column), AreaSize);
-% end
+AreaSize = 100 * 100;
+WaterContainerMap(Rows, Columns) = WaterContainer();
+% Contruct all the relevant watercontainers
+[ WaterContainerMap ] = MakeContainerMap( WaterContainerMap,  ahn100_gem, AreaSize );
 
-
-for Row = 1: Rows
-    for Column = 1 : Columns
-        if isnan(ahn100_gem(Row, Column)) == 0
-            WaterContainerMap(Row, Column) = WaterContainer(Row, Column, ahn100_gem(Row, Column), AreaSize);
-        end
-    end
- end
 %%
 DikeBreachLocations = [118, 583; 118, 584; 118, 585];
-UpdateList = DikeBreachLocations;
-BreachFlow = zeros(1,1000) + 1000;
+UniqueIDs = [118583; 118584;118585;];
+UpdateList =  [DikeBreachLocations UniqueIDs];
+BreachFlow = zeros(1,500) + 1000;
 for TimeStep = 1 : length(BreachFlow)
     for Ind = 1 : length(DikeBreachLocations)
         InflowIntoSingleCell = BreachFlow(TimeStep)/length(DikeBreachLocations(:,1));
-        WaterContainerMap(DikeBreachLocations(Ind,1),DikeBreachLocations(Ind,2)).InFlow = [DikeBreachLocations(Ind,1) + 1, DikeBreachLocations(Ind,2), InflowIntoSingleCell];
+        WaterContainer = WaterContainerMap(DikeBreachLocations(Ind,1),DikeBreachLocations(Ind,2));
+        WaterContainer.AddToWaterContents( 'FromBelow', InflowIntoSingleCell);
     end
     
     % First calculate all the outflows
-    for RowNr = 1 : length(UpdateList)
-       [WaterContainerMap, NewListItems] = WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).CalculateOutFlows(UpdateList, WaterContainerMap);
-%         UpdateList = UpdateList + NewListItems;
+    [RowsUpdateList, ~ ] = size(UpdateList);
+    for RowNr = 1 : RowsUpdateList
+        [ NewListItems, WaterOutflowVolumes ] = WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).CalculateOutFlows(UpdateList);
+        WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).OutFlow = WaterOutflowVolumes;
+        WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).InFlow = [0; 0; 0; 0;];
+        UpdateList = [ UpdateList;  NewListItems ];
     end
     
     % Second, put the outflows in the correct object
-    for RowNr = 1 : length(UpdateList)
-                WaterContainerMap = WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).OutflowToOtherContainersAndRetention( WaterContainerMap );
+    [RowsUpdateList, ~ ] = size(UpdateList);
+    for RowNr = 1 : RowsUpdateList
+        WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).OutflowToOtherContainersAndRetention();
     end
-    
 end
 
 % DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
-% 
- NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
-%  
+%
+[ RowsWaterMap, ColumnsWaterMap ] = size(WaterContainerMap);
+WaterHeightMap = zeros(RowsWaterMap, ColumnsWaterMap);
+for Row = 1:RowsWaterMap
+    for Column = 1:ColumnsWaterMap
+        WaterHeightMap(Row, Column) = WaterContainerMap(Row, Column).WaterHeight;
+    end
+end
+
+DikeRingArea43.PlotArea(WaterHeightMap);
+NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
+%
 % [TotalDamage, DamageMap] = DamageModelOne.CalculateStandardDamageModel(DamageFactorsMap, MaximumDamage, NumberOfUnits);
 
