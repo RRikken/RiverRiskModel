@@ -9,11 +9,16 @@ classdef DikeBreach
         %% Afschuiving
         function SafetyFactor = CalculateStability(obj, ShearStress, , Radius, Gravitation, 
       
-        %%Sellmeijer Piping midel
-        function WaterHeightDifference = CalculateSellmeijer(obj, SeepageLength, ThicknessSandLayer, RollResistanceAngle, TowForceFactor, WeightGrainUnderwater, WeightWater, IntrinsicConductivity, PercentileSand)
+        %%Sellmeijer Piping model
+        function WaterHeightDifference = CalculateSellmeijer(obj, SeepageLength, ThicknessSandLayer, RollResistanceAngle, TowForceFactor, WeightGrainUnderwater, WeightWater, IntrinsicConductivity, PercentileSand, HydraulicConductivity, Gravitation, ConductivitySand)
             Alpha = CalculateAlpha(ThicknessSandLayer, SeepageLength);
             Beta = CalculateBeta(TowForceFactor, PercentileSand, IntrinsicConductivity, SeepageLength);
+            IntrinsicConductivity = CalculateIntrinsicConductivity(HydraulicConductivity, Gravitation, ConductivitySand); 
             WaterHeightDifference = Alpha*Beta*(WeightGrainUnderwater/WeightWater)*tan(RollResistanceAngle)*(0.68-0.10*log(Beta))*SeepageLength;
+        end
+        
+        function IntrinsicConductivity = CalculateIntrinsicConductivity(obj, HydraulicConductivity, Gravitation, ConductivitySand)
+                IntrinsicConductivity = (HydraulicConductivity/Gravitation)*ConductivitySand;
         end
         
         function Alpha = CalculateAlpha(obj, ThicknessSandLayer, SeepageLength)
@@ -23,5 +28,8 @@ classdef DikeBreach
         function Beta = CalculateBeta(obj, TowForceFactor, PercentileSand, IntrinsicConductivity, SeepageLength)
             Beta = TowForceFactor*PercentileSand*(1/(IntrinsicConductivity*SeepageLength))^(1/3);
         end
+        
+       
+            
     end
 end
