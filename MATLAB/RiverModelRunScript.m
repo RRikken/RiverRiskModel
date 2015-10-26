@@ -1,6 +1,3 @@
-%% Init workers for Parpool
-gcp;
-
 %% Load all of the data files
 Directory = 'Data\*.*';
 FileNames = dir(Directory);
@@ -49,17 +46,32 @@ DamageModelOne = DamageModel;
 %[TypeOfLandUsage, MaximumDamage ] =  DamageModelOne.ChangeLandUsageToStandardModelTypes(DikeRingArea43.Landusage, MaximumDamageLookupTable);
 
 FloodDepthMap = DikeRingArea43.CalculateFloodDepth(6);
-DikeRingArea43.PlotArea(FloodDepthMap);
+% DikeRingArea43.PlotArea(FloodDepthMap);
 
 [ Rows, Columns ] = size(FloodDepthMap);
 FlowRate = zeros(Rows, Columns) + 1;
-CriticalFlowRate = zeros(Rows, Columns) + 8; 
+CriticalFlowRate = zeros(Rows, Columns) + 8;
 ShelterFactor = zeros(Rows, Columns);
 Storm = 0;
+%% 
+DikeBreachLocations = [118, 583; 118, 584; 118, 585];
+UniqueIDs = [118583; 118584;118585;];
+AreaSize = 100 * 100;
+BreachFlow = zeros(1,2000) + 1000;
+ [ ObjectWaterMap ] = FloodedAreaCalc( DikeBreachLocations, UniqueIDs, BreachFlow, ahn100_gem, AreaSize );
 
-DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
+% DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
+%
+[ RowsWaterMap, ColumnsWaterMap ] = size(ObjectWaterMap);
+WaterHeightMap = zeros(RowsWaterMap, ColumnsWaterMap);
+for Row = 1:RowsWaterMap
+    for Column = 1:ColumnsWaterMap
+        WaterHeightMap(Row, Column) = ObjectWaterMap(Row, Column).WaterHeight;
+    end
+end
 
- NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
- 
-[TotalDamage, DamageMap] = DamageModelOne.CalculateStandardDamageModel(DamageFactorsMap, MaximumDamage, NumberOfUnits);
+DikeRingArea43.PlotArea(WaterHeightMap);
+NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
+%
+% [TotalDamage, DamageMap] = DamageModelOne.CalculateStandardDamageModel(DamageFactorsMap, MaximumDamage, NumberOfUnits);
 
