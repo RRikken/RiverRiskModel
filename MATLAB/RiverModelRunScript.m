@@ -56,22 +56,57 @@ Storm = 0;
 %% 
 DikeBreachLocations = [118, 583; 118, 584; 118, 585];
 UniqueIDs = [118583; 118584;118585;];
+UpdateList =  [DikeBreachLocations UniqueIDs];
 AreaSize = 100 * 100;
-BreachFlow = zeros(1,2000) + 1000;
- [ ObjectWaterMap ] = FloodedAreaCalc( DikeBreachLocations, UniqueIDs, BreachFlow, ahn100_gem, AreaSize );
+BreachFlow = zeros(1, 100) + 4000;
+[ AreaMapStructure, WaterContentMap ] = BuildStructureForArea( ahn100_max, AreaSize );
 
-% DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
-%
-[ RowsWaterMap, ColumnsWaterMap ] = size(ObjectWaterMap);
-WaterHeightMap = zeros(RowsWaterMap, ColumnsWaterMap);
-for Row = 1:RowsWaterMap
-    for Column = 1:ColumnsWaterMap
-        WaterHeightMap(Row, Column) = ObjectWaterMap(Row, Column).WaterHeight;
+for TimeStep = 1 : length(BreachFlow) 
+    for ind = 1 : length(DikeBreachLocations(:,1))
+        Row = DikeBreachLocations(ind, 1);
+        Column = DikeBreachLocations(ind, 2);
+        WaterContentMap(Row, Column) = BreachFlow(TimeStep);
+        AreaMapStructure(Row, Column).WaterLevel = WaterContentMap(Row, Column) / AreaMapStructure(Row, Column).AreaSize + AreaMapStructure(Row, Column).BottomHeight;
+        AreaMapStructure(Row, Column).WaterDepth = WaterContentMap(Row, Column) / AreaMapStructure(Row, Column).AreaSize;
+        AreaMapStructure(Row, Column).InFlow(4,2) = 1;
     end
+    
+    for ind2 = 1 : length(UpdateList(:,1))
+        [ WaterOutflowVolumes, NewUpdateListItems ] = CalculateOutFlows(  AreaMapStructure, WaterContentMap, UpdateList( ind2, 1 ), UpdateList( ind2, 2 ), UpdateList );
+        AreaMapStructure( UpdateList( ind2, 1 ), UpdateList( ind2, 2 ) ).OutFlow = WaterOutflowVolumes;
+    end
+    
+    for  ind3 = 1 : length(UpdateList(:,1))
+        [ AreaMapStructure, WaterContentMap ] = PutOutflowIntoArea( AreaMapStructure, WaterContentMap, UpdateList( ind3, 1 ), UpdateList( ind3, 2 ) );
+        AreaMapStructure(UpdateList( ind3, 1 ), UpdateList( ind3, 2 )).WaterLevel = ...
+            WaterContentMap(UpdateList( ind3, 1 ), UpdateList( ind3, 2 )) / AreaMapStructure(UpdateList( ind3, 1 ), UpdateList( ind3, 2 )).AreaSize...
+            + AreaMapStructure(UpdateList( ind3, 1 ), UpdateList( ind3, 2 )).BottomHeight;
+        AreaMapStructure(UpdateList( ind3, 1 ), UpdateList( ind3, 2 )).WaterDepth =...
+            WaterContentMap(UpdateList( ind3, 1 ), UpdateList( ind3, 2 )) / AreaMapStructure(UpdateList( ind3, 1 ), UpdateList( ind3, 2 )).AreaSize;
+    end
+    UpdateList = [UpdateList; NewUpdateListItems];
 end
 
-DikeRingArea43.PlotArea(WaterHeightMap);
-NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
+%%
+% DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
+%
+
+% DikeRingArea43.PlotArea(WaterHeightMap);
+% NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
 %
 % [TotalDamage, DamageMap] = DamageModelOne.CalculateStandardDamageModel(DamageFactorsMap, MaximumDamage, NumberOfUnits);
-
+%%
+% Z = HeightMaps(:,:,1);
+% surf(Z)
+% axis tight manual
+% ax = gca;
+% ax.NextPlot = 'replaceChildren';
+% 
+% loops = 100;
+% F(loops) = struct('cdata',[],'colormap',[]);
+% for j = 1:loops
+%     
+%     surf(HeightMaps(:,:,j))
+%     drawnow
+%     F(j) = getframe(gcf);
+% end

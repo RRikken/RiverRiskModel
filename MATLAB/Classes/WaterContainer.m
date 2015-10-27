@@ -23,19 +23,57 @@ classdef WaterContainer < handle
     end
     
     methods
-        function obj = WaterContainer(RowPosition, ColumnPosition, BottomHeight, AreaSize)
-            if nargin==0
+        function obj = WaterContainer(BottomHeight, AreaSize)
+            if nargin ~= 0
+                [ m, n ] = size(BottomHeight);
+                obj(m,n) = WaterContainer;
+                for i = 1:m
+                    for j = 1:n
+                        if isnan(BottomHeight(i,j)) == 0
+                            obj(i,j).RowPosition= i;
+                            obj(i,j).ColumnPosition = j;
+                            obj(i,j).BottomHeight = BottomHeight(i,j);
+                            obj(i,j).AreaSize = AreaSize;
+                            obj(i,j).WaterContents = 0;
+                            if i > 1
+                                if isnan(BottomHeight(i - 1 ,j)) == 0
+                                    obj(i,j).NeighbourAbove = obj(i - 1 ,j);
+                                end
+                             end
+                             if j > 1 
+                                if isnan(BottomHeight(i, j - 1 )) == 0
+                                    obj(i,j).NeighbourLeft = obj(i ,j - 1);
+                                end
+                             end
+                             if j < n 
+                                if isnan(BottomHeight(i, j + 1 )) == 0
+                                    obj(i,j).NeighbourRight = obj(i ,j + 1);
+                                end
+                             end
+                             if i < m 
+                                if isnan(BottomHeight(i + 1, j )) == 0
+                                    obj(i,j).NeighbourBelow = obj(i + 1 , j);
+                                end
+                             end
+                        else
+                            obj(i,j).RowPosition= NaN;
+                            obj(i,j).ColumnPosition = NaN;
+                            obj(i,j).BottomHeight = NaN;
+                            obj(i,j).AreaSize = NaN;
+                            obj(i,j).WaterContents = NaN;
+                            obj(i,j).NeighbourAbove = NaN;
+                            obj(i,j).NeighbourBelow = NaN;
+                            obj(i,j).NeighbourLeft = NaN;
+                            obj(i,j).NeighbourRight = NaN;
+                        end
+                    end
+                end
+            elseif nargin==0
                 obj.RowPosition= NaN;
                 obj.ColumnPosition = NaN;
                 obj.BottomHeight = NaN;
                 obj.AreaSize = NaN;
                 obj.WaterContents = NaN;
-            else
-                obj.RowPosition= RowPosition;
-                obj.ColumnPosition = ColumnPosition;
-                obj.BottomHeight = BottomHeight;
-                obj.AreaSize = AreaSize;
-                obj.WaterContents = 0;
             end
         end
         
@@ -50,9 +88,9 @@ classdef WaterContainer < handle
         function obj = AddToWaterContents(obj, FromWhereItCame, OutFlowVolume)
             if strcmp(FromWhereItCame, 'FromAbove') && OutFlowVolume > 0;
                 obj.InFlow(1,1) = 1;
-            elseif strcmp(FromWhereItCame, 'FromRight') && OutFlowVolume > 0;
-                obj.InFlow(2,1) = 1;
             elseif strcmp(FromWhereItCame, 'FromLeft') && OutFlowVolume > 0;
+                obj.InFlow(2,1) = 1;
+            elseif strcmp(FromWhereItCame, 'FromRight') && OutFlowVolume > 0;
                 obj.InFlow(3,1) = 1;
             elseif strcmp(FromWhereItCame, 'FromBelow') && OutFlowVolume > 0;
                 obj.InFlow(4,1) = 1;
@@ -83,7 +121,6 @@ classdef WaterContainer < handle
                 n=floor(log10(SelectedCell(2)));
                 UniqueID = 10^(n+1)*SelectedCell(1) + SelectedCell(2);
                 
-%                 UniqueID = str2num(sprintf('%d%d',SelectedCell(1),SelectedCell(2)));
                 UniqueIDsUpdateList = UpdateList(:,3);
                 IsIDInUpdateList = NaN;
                 if isempty(UniqueID) == 0
@@ -98,24 +135,26 @@ classdef WaterContainer < handle
         end
         
         function OutflowToOtherContainersAndRetention( obj )
-            if isobject(obj.NeighbourAbove) == 1
+            if isobject(obj.NeighbourAbove) == 1 && obj.OutFlow(1,2) > 0;
                 obj.NeighbourAbove.AddToWaterContents('FromBelow', obj.OutFlow(1,2));
                 obj.OutFlow(1,2) = 0;
             end
-            if isobject(obj.NeighbourLeft) == 1
+            if isobject(obj.NeighbourLeft) == 1 && obj.OutFlow(2,2) > 0;
                 obj.NeighbourLeft.AddToWaterContents('FromRight', obj.OutFlow(2,2));
                 obj.OutFlow(2,2) = 0 ;
             end
-            if isobject(obj.NeighbourRight) == 1
+            if isobject(obj.NeighbourRight) == 1 && obj.OutFlow(3,2) > 0;
                 obj.NeighbourRight.AddToWaterContents('FromLeft', obj.OutFlow(3,2));
                 obj.OutFlow(3,2) = 0;
             end
-            if isobject(obj.NeighbourBelow) == 1
+            if isobject(obj.NeighbourBelow) == 1 && obj.OutFlow(4,2) > 0;
                 obj.NeighbourBelow.AddToWaterContents('FromAbove', obj.OutFlow(4,2));
                 obj.OutFlow(4,2) = 0;
             end
-            obj.WaterContents = obj.WaterContents + obj.OutFlow(5,2);
-            obj.OutFlow(5,2) = 0;
+            if obj.OutFlow(5,2) > 0;
+                obj.WaterContents = obj.WaterContents + obj.OutFlow(5,2);
+                obj.OutFlow(5,2) = 0;
+            end
             if sum(obj.OutFlow(:,2)) > 0
                 obj.WaterContents = obj.WaterContents + sum(obj.OutFlow(:,2));
                 obj.OutFlow(1:5,2) = 0;
@@ -125,6 +164,7 @@ classdef WaterContainer < handle
         end
         
         function SurroundingWaterLevels = CheckSurroundingWaterLevels(obj)
+            SurroundingWaterLevels = zeros(4,1);
             if isobject(obj.NeighbourAbove) == 1
                 SurroundingWaterLevels(1,1) = obj.NeighbourAbove.WaterLevel;
             else
@@ -153,6 +193,7 @@ classdef WaterContainer < handle
             AllWaterLevels(5, 2) = obj.WaterLevel;
             SurroundingWaterLevels(obj.InFlow == 1 ) = NaN;
             SurroundingWaterLevels(5,1) = obj.WaterLevel;
+            SortedWaterLevels =  zeros(5,2);
             SortedWaterLevels(:,1) =  1:5;
             SortedWaterLevels(:,2) = SurroundingWaterLevels;
             [~, order] = sort(SortedWaterLevels(:, 2));
@@ -160,6 +201,7 @@ classdef WaterContainer < handle
         end
         
         function [WaterOutflowVolumes, obj] = DetermineOutflows(obj, SortedWaterLevels)
+            WaterOutflowVolumes = zeros(5,2);
             WaterOutflowVolumes(:, 1) = SortedWaterLevels(:, 1);
             WaterOutflowVolumes(:, 2) = [0; 0; 0; 0; 0];
             
@@ -181,20 +223,20 @@ classdef WaterContainer < handle
                         error('Waterlevel too low')
                     end
                     DifferenceInWaterLevel = obj.WaterLevel - SortedWaterLevels(1,2);
-                   WaterVolume = DifferenceInWaterLevel * obj.AreaSize;
+                    WaterVolume = DifferenceInWaterLevel * obj.AreaSize;
                     % Take the water that needs to be divided out of the container
                     obj.WaterContents = obj.WaterContents - WaterVolume;
                     if obj.WaterContents < -0.00000001
                         error('WaterContents cannot be lower then 0')
                     end
-                   % Reset to the new waterlevel
+                    % Reset to the new waterlevel
                     [~, order] = sort(SortedWaterLevels(:, 1));
                     SortedWaterLevels = SortedWaterLevels(order, :);
                     SortedWaterLevels(5) = obj.WaterLevel;
                     [~, order] = sort(SortedWaterLevels(:, 2));
                     SortedWaterLevels = SortedWaterLevels(order, :);
                 end
-                
+                ContainerVolume = zeros(5,1);
                 ContainerVolume(1 : 5,1) = 0;
                 
                 for ind = 1 : NumberOfContainers
@@ -217,14 +259,15 @@ classdef WaterContainer < handle
                     if WaterOutflowVolumes(ind, 2) < -0.0000001
                         error('Outflow cannot be negative')
                     end
-                    if sum(WaterOutflowVolumes(:,2)) > WaterVolume - 0.01 && sum(WaterOutflowVolumes(:,2)) < WaterVolume + 0.01
+                    if sum(WaterOutflowVolumes(:,2)) > WaterVolume - 0.00001 && sum(WaterOutflowVolumes(:,2)) < WaterVolume + 0.00001
                         break;
-                        %                     elseif sum(WaterOutflowVolumes(:,2)) > WaterVolume
-                        %                         error('Wateroutflow exceeds water available.')
+                    elseif sum(WaterOutflowVolumes(:,2)) > WaterVolume
+                        error('Wateroutflow exceeds water available.')
                     end
                 end
             end
-            WaterOutflowVolumes = sortrows(WaterOutflowVolumes, 1);
+            [~, order] = sort(WaterOutflowVolumes(:, 1));
+            WaterOutflowVolumes = WaterOutflowVolumes(order, :);
         end
     end
 end

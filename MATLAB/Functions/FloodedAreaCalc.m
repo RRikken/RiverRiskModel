@@ -1,10 +1,12 @@
-function [ WaterContainerMap ] = FloodedAreaCalc( DikeBreachLocations, UniqueIDs, BreachFlow, ahn100_gem, AreaSize )
+function [ WaterContainerMap, WaterHeightMap ] = FloodedAreaCalc( DikeBreachLocations, UniqueIDs, BreachFlow, ahn100_gem, AreaSize )
 %FLOODAREACALCULATION Summary of this function goes here
 %   Detailed explanation goes here
 
 [ WaterContainerMap ] = WaterContainer(  ahn100_gem, AreaSize );
 
 UpdateList =  [DikeBreachLocations UniqueIDs];
+[Rows, Columns ] = size(ahn100_gem);
+WaterHeightMap = zeros(Rows, Columns, length(BreachFlow)/10);
 
 for TimeStep = 1 : length(BreachFlow)
     for Ind = 1 : length(DikeBreachLocations)
@@ -26,6 +28,9 @@ for TimeStep = 1 : length(BreachFlow)
     for RowNr = 1 : RowsUpdateList
         WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).OutflowToOtherContainersAndRetention();
     end
+%     if mod(TimeStep, 10) == 0
+%         WaterHeightMap(:,:,TimeStep/10) = MakeWaterHeightMap( WaterContainerMap );
+%     end
 end
 
 end
