@@ -15,17 +15,17 @@ AreaMapStructure(Rows, Columns).ColumnPosition = NaN;
 
 for Row = 1 : Rows
     for Column = 1 : Columns
-       
+       if isnan(BottomHeightMap(Row, Column)) == 0
             AreaMapStructure(Row, Column).BottomHeight = BottomHeightMap(Row, Column);
             AreaMapStructure(Row, Column).AreaSize = AreaSize;
             WaterContents(Row, Column) = 0;
             AreaMapStructure(Row, Column).OutFlow = [1 0;2 0;3 0;4 0; 5 0];
             AreaMapStructure(Row, Column).InFlow = [1 0;2 0;3 0;4 0];
-            AreaMapStructure(Row, Column).Depth = 0;
+            AreaMapStructure(Row, Column).WaterDepth = 0;
             AreaMapStructure(Row, Column).WaterLevel = BottomHeightMap(Row, Column);
             AreaMapStructure(Row, Column).RowPosition = Row;
             AreaMapStructure(Row, Column).ColumnPosition = Column;
-
+       end
     end
 end
 end
