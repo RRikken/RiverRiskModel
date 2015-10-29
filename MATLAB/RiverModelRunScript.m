@@ -8,6 +8,17 @@ for K = 3:NumberOfFileIds
     load(FileNames(K).name);
 end
 clear FileNames Directory K NumberOfFileIds Values
+% LargeAreaAHN400_max = zeros(222 / 2, 982 / 2);
+% for Row = 1 : 222 / 2
+%     for Column =  1 : 982 / 2
+%         RowOne = Row * 2-1;
+%         RowTwo = Row * 2;
+%         ColumnOne = Column * 2 - 1;
+%         ColumnTwo = Column * 2;
+%         MaxFromArea  = max(max(ahn100_max( RowOne : RowTwo, ColumnOne : ColumnTwo)));
+%         LargeAreaAHN400_max(Row, Column) = MaxFromArea;
+%     end
+% end
 
 %%  Initialize river model
 % Select the data for the breachlocations
@@ -59,9 +70,9 @@ BreachInFlowLogicalRowNumber = 4;
 UniqueIDs = [118583; 118584;118585;];
 UpdateList =  [DikeBreachLocations UniqueIDs];
 AreaSize = 100 * 100;
-BreachFlow = zeros(1, 14000) + 4000;
+BreachFlow = zeros(1, 2000) + 24000/3;
 [ AreaMapStructure, WaterContentMap ] = BuildStructureForArea( ahn100_max, AreaSize );
-[ FloodDepthMap, FlowRateMap ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations, BreachInFlowLogicalRowNumber, BreachFlow);
+[ FloodDepthMap, FlowRateMap, WaterContentsArraysForGraphs ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations, BreachInFlowLogicalRowNumber, BreachFlow);
 
 %%
 DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);

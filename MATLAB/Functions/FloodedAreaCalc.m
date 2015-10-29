@@ -9,7 +9,7 @@ UpdateList =  [DikeBreachLocations UniqueIDs];
 WaterHeightMap = zeros(Rows, Columns, length(BreachFlow)/10);
 
 for TimeStep = 1 : length(BreachFlow)
-    for Ind = 1 : length(DikeBreachLocations)
+    parfor Ind = 1 : length(DikeBreachLocations)
         InflowIntoSingleCell = BreachFlow(TimeStep)/length(DikeBreachLocations(:,1));
         WaterContainerMap(DikeBreachLocations(Ind,1),DikeBreachLocations(Ind,2)).AddToWaterContents( 'FromBelow', InflowIntoSingleCell);
     end
@@ -25,7 +25,7 @@ for TimeStep = 1 : length(BreachFlow)
     
     % Second, put the outflows in the correct object
     [RowsUpdateList, ~ ] = size(UpdateList);
-    for RowNr = 1 : RowsUpdateList
+    parfor RowNr = 1 : RowsUpdateList
         WaterContainerMap(UpdateList(RowNr,1),UpdateList(RowNr,2)).OutflowToOtherContainersAndRetention();
     end
 %     if mod(TimeStep, 10) == 0
