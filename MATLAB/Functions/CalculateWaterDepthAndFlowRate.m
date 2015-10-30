@@ -1,6 +1,6 @@
 function [ FloodDepthMap, FlowRateMap, WaterContentsArraysForGraphs ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations, BreachInFlowLogicalRowNumber, BreachFlow)
 
-WaterContentsArraysForGraphs = zeros(223, 983, length(BreachFlow));
+WaterContentsArraysForGraphs = zeros(223, 983, length(BreachFlow)/2);
 
 
 for TimeStep = 1 : length(BreachFlow) 
@@ -35,9 +35,9 @@ for TimeStep = 1 : length(BreachFlow)
     if TotalWaterContents + 1 < TotalBreachFlow || TotalWaterContents - 1 >  TotalBreachFlow
         error('These numbers dont add up!')
     end
-%     if mod(TimeStep, 10) == 0
-        WaterContentsArraysForGraphs(:,:, TimeStep) = WaterContentMap;
-%     end
+    if mod(TimeStep, 2) == 0
+        WaterContentsArraysForGraphs(:,:, TimeStep/2) = WaterContentMap;
+    end
     
 end
 FloodDepthMap = WaterContentMap;

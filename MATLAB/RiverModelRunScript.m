@@ -70,7 +70,7 @@ BreachInFlowLogicalRowNumber = 4;
 UniqueIDs = [118583; 118584;118585;];
 UpdateList =  [DikeBreachLocations UniqueIDs];
 AreaSize = 100 * 100;
-BreachFlow = zeros(1, 2000) + 24000/3;
+BreachFlow = zeros(1, 4000) + 24000/3;
 [ AreaMapStructure, WaterContentMap ] = BuildStructureForArea( ahn100_max, AreaSize );
 [ FloodDepthMap, FlowRateMap, WaterContentsArraysForGraphs ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations, BreachInFlowLogicalRowNumber, BreachFlow);
 
