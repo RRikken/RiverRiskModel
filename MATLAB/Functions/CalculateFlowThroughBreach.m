@@ -3,5 +3,5 @@ function FlowThroughBreach = CalculateFlowThroughBreach(HeightDifference, Height
 Gravitation = 9.81;
 WidthBreach = 300;
 %Formules
-FlowThroughBreach = ((2 * Gravitation)^0.5) * WidthBreach * HeightDifference * HeightBreachInside;
+FlowThroughBreach = ((2 * Gravitation)^0.5) * WidthBreach * HeightDifference^(0.5) * HeightBreachInside;
 end
