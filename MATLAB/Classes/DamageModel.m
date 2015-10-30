@@ -44,6 +44,32 @@ classdef DamageModel
             TotalDamage = sum(sum( TotalDamageMap, 'omitnan'), 'omitnan');
         end
         
+        function CasualtyMap = CalculateCasualties(FloodDepth,FlowRate,RiseRate,InhabitantsMap)
+            [ Rows, Columns ] = size(FloodDepth);
+            CasualtyMap = zeros(Rows, Columns);
+            for Row = 1 : Rows
+                for Columns = 1 : Columns
+                    if ((FloodDepth(Row, Column) * FlowRate(Row, Column)) >= 7) && (FlowRate(Row, Column) >= 2) 
+                        CasualtyMap(Row, Column)  = 1;
+                    elseif (RiseRate(Row, Column) < 0.5) && (FloodDepth(Row, Column) > 0)
+                        CasualtyMap(Row, Column) = 1.34e-3*exp(0.59*FloodDepth(Row, Column));
+                        CasualtyMap(Row, Column) = min(max(CasualtyMap(Row, Column),0),1);
+                    elseif (RiseRate(Row, Column) >= 0.5) && (FloodDepth(Row, Column) > 0) && (FloodDepth(Row, Column) < 1.5) 
+                        CasualtyMap(Row, Column) = 1.34e-3*exp(0.59*FloodDepth(Row, Column));
+                        CasualtyMap(Row, Column) = min( max(CasualtyMap(Row, Column),0),1);
+                    elseif (RiseRate(Row, Column) >= 0.5) && (FloodDepth(Row, Column) >= 1.5) && (FloodDepth(Row, Column) <= 4.7) 
+                         CasualtyMap(Row, Column) = 1.45e-3*exp(1.39*FloodDepth(Row, Column));
+                         CasualtyMap(Row, Column) = min( max(CasualtyMap(Row, Column),0),1); 
+                    elseif (RiseRate(Row, Column) >= 0.5) && (FloodDepth(Row, Column) > 4.7) 
+                        CasualtyMap(Row, Column) = 1;
+                    else
+                        CasualtyMap(Row, Column) = 0;
+                    end
+                end
+            end
+                CasualtyMap = CasualtyMap .* InhabitantsMap;
+        end
+        
         function DamageFactorsMap = SelectDamageFactors(obj, LandUsage, FloodDepth, FlowRate, CriticalFlowRate, ShelterFactor, Storm)
             [Rows,Columns] = size(LandUsage);
             DamageFactorsMap = zeros(Rows,Columns);

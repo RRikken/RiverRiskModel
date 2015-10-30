@@ -8,17 +8,17 @@ for K = 3:NumberOfFileIds
     load(FileNames(K).name);
 end
 clear FileNames Directory K NumberOfFileIds Values
-% LargeAreaAHN400_max = zeros(222 / 2, 982 / 2);
-% for Row = 1 : 222 / 2
-%     for Column =  1 : 982 / 2
-%         RowOne = Row * 2-1;
-%         RowTwo = Row * 2;
-%         ColumnOne = Column * 2 - 1;
-%         ColumnTwo = Column * 2;
-%         MaxFromArea  = max(max(ahn100_max( RowOne : RowTwo, ColumnOne : ColumnTwo)));
-%         LargeAreaAHN400_max(Row, Column) = MaxFromArea;
-%     end
-% end
+LargeAreaAHN400_max = zeros(222 / 2, 982 / 2);
+for Row = 1 : 222 / 2
+    for Column =  1 : 982 / 2
+        RowOne = Row * 2-1;
+        RowTwo = Row * 2;
+        ColumnOne = Column * 2 - 1;
+        ColumnTwo = Column * 2;
+        MaxFromArea  = max(max(ahn100_max( RowOne : RowTwo, ColumnOne : ColumnTwo)));
+        LargeAreaAHN400_max(Row, Column) = MaxFromArea;
+    end
+end
 
 %%  Initialize river model
 % Select the data for the breachlocations
@@ -51,33 +51,52 @@ FlowThroughBreach5_2 = CalculateFlowThroughBreach(DeltaH5_1, BreachInsideWaterLe
 
 FlowThroughBreach5_1(FlowThroughBreach5_1 < 0) = 0;
 FlowThroughBreach5_2(FlowThroughBreach5_2 < 0) = 0;
+
+%% 
+% DikeBreachLocations5_1 = [118, 583; 118, 584; 118, 585];
+DikeBreachLocations5_1 = [59, 291; 59, 292; ];
+DikeBreachLocations5_2 = [9, 343; 9, 344; 9, 345];
+BreachInFlowLogicalRowNumber = 4;
+% UniqueIDs = [118583; 118584;118585;];
+UniqueIDs = [59291; 59292; ];
+UpdateList =  [DikeBreachLocations5_1 UniqueIDs];
+AreaSize = 200 * 200;
+BreachFlowTemp = FlowThroughBreach5_1(12:21);
+
+IncreasedCellHeights = [59 290; 60 291; 60 292; 59 293 ];
+for ind = 1 : length(IncreasedCellHeights(:,1))
+    LargeAreaAHN400_max(IncreasedCellHeights(ind,1), IncreasedCellHeights(ind,2)) = 20;
+end
+
+% Expand breachflow to ten minutes
+for i = 1:10
+    BreachFlow( 120 * (i-1) + 1 : i * 120) = BreachFlowTemp( i ) * 10;
+end
+BreachFlowForCalculation = BreachFlow(1 : 600);
+% [ AreaMapStructure, WaterContentMap ] = BuildStructureForArea( ahn100_max, AreaSize );
+[ AreaMapStructure, WaterContentMap ] = BuildStructureForArea( LargeAreaAHN400_max, AreaSize );
+% [ FloodDepthMap, FlowRateMap, WaterContentsArraysForGraphs ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations5_1, BreachInFlowLogicalRowNumber, BreachFlowForCalculation);
+[  FloodDepthMap, FlowRateMap, WaterLevelMap, WaterContentsArraysForGraphs ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations5_1, BreachInFlowLogicalRowNumber, BreachFlowForCalculation);
+
 %% Initialize dike ring area and damage model
+% Expand map
+
+%calculate damages
 DikeRingArea43 = DikeRingArea(43, landgebruik, ahn100_gem, ahn100_max, inwoners);
 DamageModelOne = DamageModel;
-%%
-%[TypeOfLandUsage, MaximumDamage ] =  DamageModelOne.ChangeLandUsageToStandardModelTypes(DikeRingArea43.Landusage, MaximumDamageLookupTable);
+[TypeOfLandUsage, MaximumDamage ] =  DamageModelOne.ChangeLandUsageToStandardModelTypes(DikeRingArea43.Landusage, MaximumDamageLookupTable);
 
-[ Rows, Columns ] = size(FloodDepthMap);
+[ Rows, Columns ] = size(LargeAreaAHN400_max);
 FlowRate = zeros(Rows, Columns) + 1;
 CriticalFlowRate = zeros(Rows, Columns) + 8;
 ShelterFactor = zeros(Rows, Columns);
 Storm = 0;
-%% 
-DikeBreachLocations = [118, 583; 118, 584; 118, 585];
-BreachInFlowLogicalRowNumber = 4;
-UniqueIDs = [118583; 118584;118585;];
-UpdateList =  [DikeBreachLocations UniqueIDs];
-AreaSize = 100 * 100;
-BreachFlow = zeros(1, 4000) + 24000/3;
-[ AreaMapStructure, WaterContentMap ] = BuildStructureForArea( ahn100_max, AreaSize );
-[ FloodDepthMap, FlowRateMap, WaterContentsArraysForGraphs ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations, BreachInFlowLogicalRowNumber, BreachFlow);
-
-%%
 DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMap, FlowRate, CriticalFlowRate, ShelterFactor, Storm);
-%
-
-% DikeRingArea43.PlotArea(WaterHeightMap);
-% NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
+ [ TotalDamage, TotalDamageMap ] = CalculateStandardDamageModel( DamageFactors, MaximumDamageValue, NumberOfUnits);
+% Calculate casualties
+CasualtyMap = CalculateCasualties(FloodDepth,FlowRate,RiseRate,InhabitantsMap);
+DikeRingArea43.PlotArea(WaterContentsArraysForGraphs(:,:,100));
+NumberOfUnits = ones(Rows, Columns) .* (100 * 100);
 %
 % [TotalDamage, DamageMap] = DamageModelOne.CalculateStandardDamageModel(DamageFactorsMap, MaximumDamage, NumberOfUnits);
 %%
