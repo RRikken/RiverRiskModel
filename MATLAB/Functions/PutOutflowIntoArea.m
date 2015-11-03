@@ -28,7 +28,6 @@ function [ AreaMapStructure, WaterContentMap ] = PutOutflowIntoArea( AreaMapStru
             WaterContentMap(RowPosition, ColumnPosition) - OutFlow(3,2);
         AreaMapStructure(RowPosition, ColumnPosition + 1).InFlow(2,2) = 1; %From right to left
         AreaMapStructure(RowPosition, ColumnPosition).OutFlow(3,2) = 0;
-        
     end
     if OutFlow(4,2) > 0 && RowPosition + 1 <= Rows
         WaterContentMap(RowPosition + 1, ColumnPosition) =...
@@ -37,11 +36,5 @@ function [ AreaMapStructure, WaterContentMap ] = PutOutflowIntoArea( AreaMapStru
             WaterContentMap(RowPosition, ColumnPosition) - OutFlow(4,2);
         AreaMapStructure(RowPosition + 1, ColumnPosition).InFlow(1,2) = 1;
         AreaMapStructure(RowPosition, ColumnPosition).OutFlow(4,2) = 0;
-    end
-    
-    if sum(AreaMapStructure(RowPosition, ColumnPosition).OutFlow(1:4,2)) < -0.0000001 ||...
-            sum(AreaMapStructure(RowPosition, ColumnPosition).OutFlow(1:4,2)) > 0.0000001
-        WaterContentMap(RowPosition, ColumnPosition) = WaterContentMap(RowPosition, ColumnPosition) + sum(AreaMapStructure(RowPosition, ColumnPosition).OutFlow(:,2));
-        error('Ouflow is not zero')
     end
 end

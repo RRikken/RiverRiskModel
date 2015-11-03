@@ -4,47 +4,47 @@ SurroundingCells = zeros(4,2);
 SurroundingCells(1:4,1) = RowPosition;
 SurroundingCells(1:4,2) = ColumnPosition;
 SurroundingCells = SurroundingCells + [ -1 0; 0 -1; 0 1; 1 0; ];
+SurroundingWaterLevels = [1 NaN; 2 NaN; 3 NaN; 4 NaN; 5 NaN];
+[ TotalRows, TotalColumns ] = size(WaterContentMap);
+WaterContents = zeros(1,4);
 
 for ind = 1 : 4
     WaterContents(ind) =  WaterContentMap(SurroundingCells(ind,1), SurroundingCells(ind,2));
 end
     
-Waterlevels = CheckSurroundingWaterLevels(StructureMap, RowPosition, ColumnPosition);
-[ RowValuesSortedArray ] = SortWaterLevels( Waterlevels, StructureMap(RowPosition, ColumnPosition).InFlow );
+Waterlevels = CheckSurroundingWaterLevels(StructureMap, RowPosition, TotalRows, ColumnPosition, TotalColumns, SurroundingWaterLevels);
+[ RowValuesSortedArray ] = SortSurroundingWaterLevels( Waterlevels, StructureMap(RowPosition, ColumnPosition).InFlow );
 WaterOutflowVolumes = DetermineOutflows(RowValuesSortedArray, StructureMap, WaterContentMap, RowPosition, ColumnPosition);
-NewListItems = CheckUpdateList_mex(UpdateList, WaterOutflowVolumes, WaterContents, SurroundingCells);
+NewListItems = CheckUpdateList(UpdateList, WaterOutflowVolumes, WaterContents, SurroundingCells);
 
 end
 
-function SurroundingWaterLevels = CheckSurroundingWaterLevels(WaterLevelMap, RowPosition, ColumnPosition)
-SurroundingWaterLevels = [1 NaN; 2 NaN; 3 NaN; 4 NaN; 5 NaN];
-[ MaxRows, MaxColumns ] = size(WaterLevelMap);
+function SurroundingWaterLevels = CheckSurroundingWaterLevels(WaterLevelMap, RowPosition, TotalRows, ColumnPosition, TotalColumns, SurroundingWaterLevels)
+
 WaterLevel = WaterLevelMap(RowPosition, ColumnPosition).WaterLevel(1,1);
 SurroundingWaterLevels(5,2) = WaterLevel;
+
 if RowPosition - 1 >= 1
     SurroundingWaterLevels(1,2) = WaterLevelMap(RowPosition - 1, ColumnPosition).WaterLevel(1,1);
 end
 if ColumnPosition - 1 >= 1
     SurroundingWaterLevels(2,2) = WaterLevelMap(RowPosition, ColumnPosition - 1).WaterLevel(1,1);
 end
-if ColumnPosition + 1 <= MaxColumns
+if ColumnPosition + 1 <= TotalColumns
     SurroundingWaterLevels(3,2) = WaterLevelMap(RowPosition, ColumnPosition + 1).WaterLevel(1,1);
 end
-if RowPosition + 1 <= MaxRows
+if RowPosition + 1 <= TotalRows
     SurroundingWaterLevels(4,2) = WaterLevelMap(RowPosition + 1, ColumnPosition).WaterLevel(1,1);
 end
 end
 
-function [ SortedWaterLevels, AllWaterLevels ]  = SortWaterLevels( SurroundingWaterLevels, Inflow )
+function [ SortedWaterLevels, AllWaterLevels ]  = SortSurroundingWaterLevels( SurroundingWaterLevels, Inflow )
 AllWaterLevels = SurroundingWaterLevels;
 InflowLogical = zeros(5,2);
 InflowLogical(1:4,2) = Inflow(:,2) > 0;
 SurroundingWaterLevels( InflowLogical == 1 ) = NaN;
 
-SortedWaterLevels = SurroundingWaterLevels;
-
-[~, order] = sort(SortedWaterLevels(:, 2));
-SortedWaterLevels = SortedWaterLevels(order, :);
+SortedWaterLevels = SortWaterLevels( SurroundingWaterLevels );
 end
 
 function [ WaterOutflowVolumes ] = DetermineOutflows( SortedWaterLevels, StructureMap, WaterContentMap, RowPosition, ColumnPosition )
@@ -58,7 +58,8 @@ if StructureMap(RowPosition, ColumnPosition).WaterLevel(1,1) > SortedWaterLevels
         % This is waterheight because the bottom is higher then the lowest waterheight
         % in the other containers
         WaterVolume = WaterContentMap(RowPosition, ColumnPosition);
-        SortedWaterLevels = ReSortWithBottomHeight(SortedWaterLevels, StructureMap(RowPosition, ColumnPosition).BottomHeight(1,1));
+        WaterLevelsWithBottomHeight = ResetToBottomHeight(SortedWaterLevels, StructureMap(RowPosition, ColumnPosition).BottomHeight(1,1));
+        SortedWaterLevels = SortWaterLevels(WaterLevelsWithBottomHeight);
     else
         if StructureMap(RowPosition, ColumnPosition).WaterLevel(1,1) < SortedWaterLevels(1,2)
             error('Waterlevel too low')
@@ -78,7 +79,7 @@ if StructureMap(RowPosition, ColumnPosition).WaterLevel(1,1) > SortedWaterLevels
         end
     end
     
-    WaterOutflowVolumes = DivideWaterVolumeToContainers_mex( NumberOfContainers, SortedWaterLevels, WaterVolume, ContainerVolume );
+    WaterOutflowVolumes = DivideWaterVolumeToContainers( NumberOfContainers, SortedWaterLevels, WaterVolume, ContainerVolume );
     if any(WaterOutflowVolumes(:,2) < -0.00000001 )
         error('Outflow cannot be negative')
     end
@@ -89,11 +90,12 @@ end
 WaterOutflowVolumes = WaterOutflowVolumes(order, :);
 end
 
-function SortedWaterLevels = ReSortWithBottomHeight(SortedWaterLevels, SelfBottomHeight)
-[~, order] = sort(SortedWaterLevels(:, 1));
-SortedWaterLevels = SortedWaterLevels(order, :);
-SortedWaterLevels(5,2) = SelfBottomHeight;
+function SortedWaterLevels = ResetToBottomHeight(SortedWaterLevels, SelfBottomHeight)
+SelectedRow = SortedWaterLevels(:,1) == 5;
+SortedWaterLevels(SelectedRow, 1:2) = [5 SelfBottomHeight];
+end
 
-[~, order] = sort(SortedWaterLevels(:, 2));
-SortedWaterLevels = SortedWaterLevels(order, :);
+function SortedWaterLevels = SortWaterLevels( SortedWaterLevels )
+    [~, order] = sort(SortedWaterLevels(:, 2));
+    SortedWaterLevels = SortedWaterLevels(order, :);
 end

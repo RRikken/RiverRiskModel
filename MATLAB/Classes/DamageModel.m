@@ -39,9 +39,8 @@ classdef DamageModel
     end
     
     methods    
-        function [ TotalDamage, TotalDamageMap ] = CalculateStandardDamageModel(obj, DamageFactors, MaximumDamageValue, NumberOfUnits)
+        function [ TotalDamageMap ] = CalculateStandardDamageModel(obj, DamageFactors, MaximumDamageValue, NumberOfUnits)
             TotalDamageMap = DamageFactors .* MaximumDamageValue .* NumberOfUnits;
-            TotalDamage = sum(sum( TotalDamageMap, 'omitnan'), 'omitnan');
         end
         
         function CasualtyMap = CalculateCasualties(FloodDepth,FlowRate,RiseRate,InhabitantsMap)
