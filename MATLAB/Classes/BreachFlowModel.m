@@ -1,10 +1,13 @@
-classdef BreachFlowModel < handle
+classdef BreachFlowModel < handle 
     %BREACHFLOWMODEL Summary of this class goes here
     %   Detailed explanation goes here
     
     properties (Access = private)
         WidthBreach
         HeightBreach
+    end
+    
+    properties (Access = public)
         WaterLevelRiver
         WaterLevelDikeRingArea
     end
@@ -27,13 +30,6 @@ classdef BreachFlowModel < handle
             obj.WaterLevelDikeRingArea = 0;
         end
         
-        function set.WaterLevelRiver(obj, WaterLevelRiver)
-            obj.WaterLevelRiver = WaterLevelRiver;
-        end
-         function set.WaterLevelDikeRingArea(obj, WaterLevelRiver)
-            obj.WaterLevelDikeRingArea = WaterLevelRiver;
-         end
-        
         function ReturnedWaterLevelDifference =  get.WaterLevelDifference(obj)
             ReturnedWaterLevelDifference = obj.WaterLevelRiver - obj.WaterLevelDikeRingArea;
         end
@@ -48,7 +44,7 @@ classdef BreachFlowModel < handle
             % Debietformule (Visser, 1998; Ren, 2012)
             % Qbres = 	(2/3)^1,5 ? g^0,5 ? Bbres ? hbr_uit^1,5	als hbr_in  < ? ? hbr_uit	ongestuwde instroom
             % Qbres = 	(2?g)^0,5 ? Bbres ?  ?h^0,5? hbr_in als hbr_in  > ? ? hbr_uit	gestuwde instroom
-           
+            
             if obj.WaterLevelInsideBreach < (2/3) * obj.WaterLevelOusideBreach
                 FlowThroughBreach = (2/3)^(1.5) * obj.Gravity^(0.5) * obj.WidthBreach * obj.WaterLevelOusideBreach^(1.5);
             elseif obj.WaterLevelInsideBreach >= (2/3) * obj.WaterLevelOusideBreach

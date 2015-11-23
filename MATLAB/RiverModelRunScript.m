@@ -10,19 +10,19 @@ for K = 3:NumberOfFileIds
 end
 clear FileNames Directory K NumberOfFileIds Values
 
-LargeAreaAHN400_max = zeros(222 / 2, 982 / 2);
-for Row = 1 : 222 / 2
-    for Column =  1 : 982 / 2
-        RowOne = Row * 2-1;
-        RowTwo = Row * 2;
-        ColumnOne = Column * 2 - 1;
-        ColumnTwo = Column * 2;
-        MaxFromArea  = max(max(ahn100_max( RowOne : RowTwo, ColumnOne : ColumnTwo)));
-        LargeAreaAHN400_max(Row, Column) = MaxFromArea;
-    end
-end
-
-clear Row Column RowOne RowTwo ColumnOne ColumnTwo MaxFromArea
+% LargeAreaAHN400_max = zeros(222 / 2, 982 / 2);
+% for Row = 1 : 222 / 2
+%     for Column =  1 : 982 / 2
+%         RowOne = Row * 2-1;
+%         RowTwo = Row * 2;
+%         ColumnOne = Column * 2 - 1;
+%         ColumnTwo = Column * 2;
+%         MaxFromArea  = max(max(ahn100_max( RowOne : RowTwo, ColumnOne : ColumnTwo)));
+%         LargeAreaAHN400_max(Row, Column) = MaxFromArea;
+%     end
+% end
+% 
+% clear Row Column RowOne RowTwo ColumnOne ColumnTwo MaxFromArea
 
 %%  Initialize river model
 % Select the data for the breachlocations
@@ -41,38 +41,31 @@ RiverModel5_2 = River(DataForLocation5_2(2), DataForLocation5_2(4), 7.5, DataFor
 [ Pressure5_2, WaveRepeatTime5_2, WaterHeightSummerBed5_2, WaterHeightWinterBed5_2 ]  = RiverModel5_2.CalculatePressureAndWaterHeight(WaveLobith * (2/9));
 
 %% Initialize dike breach model
-% TODO: add to script
+% TODO: move static numbers to file
 BreachBottomHeight5_1 = 7.4;
 BreachBottomHeight5_2 = 3.3;
-BreachOuterWaterLevel5_1 = WaterHeightSummerBed5_1 - BreachBottomHeight5_1;
-BreachOuterWaterLevel5_2 = WaterHeightSummerBed5_2 - BreachBottomHeight5_2;
-DeltaH5_1 = 1.3;
-DeltaH5_2 = 0.58;
-BreachInsideWaterLevel5_1 = BreachOuterWaterLevel5_1 - DeltaH5_1;
-BreachInsideWaterLevel5_2 = BreachOuterWaterLevel5_2 - DeltaH5_2;
-FlowThroughBreach5_1 = CalculateFlowThroughBreach(DeltaH5_1, BreachInsideWaterLevel5_1);
-FlowThroughBreach5_2 = CalculateFlowThroughBreach(DeltaH5_2, BreachInsideWaterLevel5_2);
+WidthBreach5_1 = 300;
+WidthBreach5_2 = 300;
+BreachFlow5_1 = BreachFlowModel(WidthBreach5_1, BreachBottomHeight5_1);
+BreachFlow5_2 = BreachFlowModel(WidthBreach5_2, BreachBottomHeight5_2);
 
-FlowThroughBreach5_1(FlowThroughBreach5_1 < 0) = 0;
-FlowThroughBreach5_2(FlowThroughBreach5_2 < 0) = 0;
-
-%% 
-% DikeBreachLocations5_1 = [118, 583; 118, 584; 118, 585];
-DikeBreachLocations5_1 = [59, 291; 59, 292; ];
-% DikeBreachLocations5_2 = [9, 343; 9, 344; 9, 345];
-DikeBreachLocations5_2 = [6, 172; 6, 173];
+%% Set variables needed 
+DikeBreachLocations5_1 = [118, 583; 118, 584; 118, 585];
+% DikeBreachLocations5_1 = [59, 291; 59, 292; ];
+DikeBreachLocations5_2 = [9, 343; 9, 344; 9, 345];
+% DikeBreachLocations5_2 = [6, 172; 6, 173];
 BreachInFlowLogicalRowNumber = 4;
-% UniqueIDs = [118583; 118584;118585;];
-UniqueIDs = [59291; 59292; ];
+UniqueIDs = [118583; 118584;118585;];
+% UniqueIDs = [59291; 59292; ];
 % UniqueIDs = [6172; 6173; ];
 UpdateList =  [DikeBreachLocations5_1 UniqueIDs];
-AreaSize = 200 * 200;
+AreaSize = 100 * 100;
 BreachFlowTemp = FlowThroughBreach5_1(12:21);
 
-IncreasedCellHeights = [59 290; 60 291; 60 292; 59 293 ];
-for ind = 1 : length(IncreasedCellHeights(:,1))
-    LargeAreaAHN400_max(IncreasedCellHeights(ind,1), IncreasedCellHeights(ind,2)) = 20;
-end
+% IncreasedCellHeights = [59 290; 60 291; 60 292; 59 293 ];
+% for ind = 1 : length(IncreasedCellHeights(:,1))
+%     LargeAreaAHN400_max(IncreasedCellHeights(ind,1), IncreasedCellHeights(ind,2)) = 20;
+% end
 
 % Expand breachflow to ten minutes
 for i = 1:10
