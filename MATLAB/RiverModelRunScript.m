@@ -46,36 +46,29 @@ BreachBottomHeight5_1 = 7.4;
 BreachBottomHeight5_2 = 3.3;
 WidthBreach5_1 = 300;
 WidthBreach5_2 = 300;
-BreachFlow5_1 = BreachFlowModel(WidthBreach5_1, BreachBottomHeight5_1);
-BreachFlow5_2 = BreachFlowModel(WidthBreach5_2, BreachBottomHeight5_2);
+InsideHeightMeasuringLocation5_1 = [116, 584];
+InsideHeightMeasuringLocation5_2 = [];
+BreachFlow5_1 = BreachFlowModel(WidthBreach5_1, BreachBottomHeight5_1, InsideHeightMeasuringLocation5_1);
+BreachFlow5_2 = BreachFlowModel(WidthBreach5_2, BreachBottomHeight5_2, InsideHeightMeasuringLocation5_2);
 
-%% Set variables needed 
-DikeBreachLocations5_1 = [118, 583; 118, 584; 118, 585];
-% DikeBreachLocations5_1 = [59, 291; 59, 292; ];
-DikeBreachLocations5_2 = [9, 343; 9, 344; 9, 345];
+%% Set variables needed
+DikeBreachLocations5_1 =[118,583; 118,584;118,585;];
+% DikeBreachLocations5_2 = [9, 343; 9, 344; 9, 345];
 % DikeBreachLocations5_2 = [6, 172; 6, 173];
 BreachInFlowLogicalRowNumber = 4;
 UniqueIDs = [118583; 118584;118585;];
 % UniqueIDs = [59291; 59292; ];
 % UniqueIDs = [6172; 6173; ];
-UpdateList =  [DikeBreachLocations5_1 UniqueIDs];
 AreaSize = 100 * 100;
-BreachFlowTemp = FlowThroughBreach5_1(12:21);
 
-% IncreasedCellHeights = [59 290; 60 291; 60 292; 59 293 ];
-% for ind = 1 : length(IncreasedCellHeights(:,1))
-%     LargeAreaAHN400_max(IncreasedCellHeights(ind,1), IncreasedCellHeights(ind,2)) = 20;
-% end
+FloodedCellsMap = containers.Map(118583,[118, 583]);
+FloodedCellsMap(118584) = [118, 584];
+FloodedCellsMap(118585) = [118, 585];
 
-% Expand breachflow to ten minutes
-for i = 1:10
-    BreachFlow( 120 * (i-1) + 1 : i * 120) = BreachFlowTemp( i ) * 10;
-end
-BreachFlowForCalculation = BreachFlow(1 : 1200);
-% [ AreaMapStructure, WaterContentMap ] = BuildStructureForArea( ahn100_max, AreaSize );
-[ AreaMapStructure, WaterContentMap ] = BuildStructureForArea( LargeAreaAHN400_max, AreaSize );
-% [ FloodDepthMap, FlowRateMap, WaterContentsArraysForGraphs ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations5_1, BreachInFlowLogicalRowNumber, BreachFlowForCalculation);
-[  WaterDepth3dMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations5_1, BreachInFlowLogicalRowNumber, BreachFlowForCalculation);
+WaterHeightWinterBed5_1 = zeros(1,100) + 11;
+
+[ AreaMapStructure, WaterContentMap, WaterLevelMap ] = BuildStructureForArea( ahn100_max );
+[  WaterDepth3dMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaSize, AreaMapStructure, WaterContentMap, WaterLevelMap, FloodedCellsMap, DikeBreachLocations5_1, BreachInFlowLogicalRowNumber, WaterHeightWinterBed5_1, BreachFlow5_1);
 
 save('ModelOutput\Results5_1.mat','WaterDepth3dMap', 'WaterContents3dMap')
 % Initialize dike ring area and damage model
