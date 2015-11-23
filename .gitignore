@@ -1,3 +1,6 @@
 *.asv
 *.prj
 codegen*/
+ModelOutput*/
+ProfilerResults*/
+GraphsAndMovies*/

@@ -43,11 +43,11 @@ classdef DamageModel
             TotalDamageMap = DamageFactors .* MaximumDamageValue .* NumberOfUnits;
         end
         
-        function CasualtyMap = CalculateCasualties(FloodDepth,FlowRate,RiseRate,InhabitantsMap)
+        function CasualtyMap = CalculateCasualties(obj, FloodDepth, FlowRate, RiseRate, InhabitantsMap)
             [ Rows, Columns ] = size(FloodDepth);
             CasualtyMap = zeros(Rows, Columns);
             for Row = 1 : Rows
-                for Columns = 1 : Columns
+                for Column = 1 : Columns
                     if ((FloodDepth(Row, Column) * FlowRate(Row, Column)) >= 7) && (FlowRate(Row, Column) >= 2) 
                         CasualtyMap(Row, Column)  = 1;
                     elseif (RiseRate(Row, Column) < 0.5) && (FloodDepth(Row, Column) > 0)
@@ -154,7 +154,7 @@ classdef DamageModel
             elseif FloodDepth > 5
                 DamageFactorCompanies = 1;
             else
-                debug;
+                DamageFactorCompanies = 0;
             end
         end
         
@@ -176,7 +176,7 @@ classdef DamageModel
             end
             ExistsStorm = exist('StormFactor',  'var');
             if ExistsStorm == 0 || isempty(StormFactor) == 1
-                debug;
+                StormFactor = 0;
             end
             s1 = StormFactor + (1 - StormFactor) * (1 - (1 - max([ 0, min([ FloodDepth, 6 ]) ]) / 6 )^4 );
             alpha = max([0, min([1, s1]) ]);

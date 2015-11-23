@@ -1,21 +1,22 @@
-function [ WaterLevelMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations, BreachInFlowLogicalRowNumber, BreachFlow)
+function [ WaterLevelMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaMapStructure, WaterContentMap, UpdateList, DikeBreachLocations, BreachInFlowLogicalRowNumber, RiverWaterHeight, WidthBreach, HeightBreach)
 
 [ Rows, Columns ] = size(WaterContentMap);
-BreachFlow = BreachFlow ./ length(DikeBreachLocations(:,1));
-WaterLevelMap = zeros(Rows, Columns, length(BreachFlow));
+WaterLevelMap = zeros(Rows, Columns, length(RiverWaterHeight));
 WaterContents3dMap = WaterLevelMap;
 
-for ind5 = 1 : length(BreachFlow)
+for ind5 = 1 : length(RiverWaterHeight)
     WaterLevelMap(:,:,ind5) = WaterContentMap;
     WaterContents3dMap(:,:,ind5) = WaterContentMap;
 end
 
-for TimeStep = 1 : length(BreachFlow)
+for TimeStep = 1 : length(RiverWaterHeight)
     NewUpdateListItems = [];
+    BreachFlow = CalculateFlowThroughBreach(WidthBreach, HeightBreach, RiverWaterHeight(TimeStep), WaterLevelDikeRingArea);
+    
     for ind = 1 : length(DikeBreachLocations(:,1))
         Row = DikeBreachLocations(ind, 1);
         Column = DikeBreachLocations(ind, 2);
-        WaterContentMap(Row, Column) = WaterContentMap(Row, Column) + BreachFlow(TimeStep);
+        WaterContentMap(Row, Column) = WaterContentMap(Row, Column) + BreachFlow;
         AreaMapStructure(Row, Column).WaterLevel = WaterContentMap(Row, Column) / AreaMapStructure(Row, Column).AreaSize + AreaMapStructure(Row, Column).BottomHeight;
         AreaMapStructure(Row, Column).WaterDepth = WaterContentMap(Row, Column) / AreaMapStructure(Row, Column).AreaSize;
         AreaMapStructure(Row, Column).InFlow(BreachInFlowLogicalRowNumber,2) = 1;

@@ -9,58 +9,37 @@ for K = 3:NumberOfFileIds
 end
 clear FileNames Directory K NumberOfFileIds Values
 
-    WaterHeights = WaterContentsArraysForGraphs(1:223,1:983,1);
-    [n_Y,n_X] = size(ahn100_max);
+    WaterHeights = TotalDamageMap(:,:,600);
+    [n_Y,n_X] = size(WaterHeights);
     surf([1:n_X], [1:n_Y],flipud(WaterHeights),'EdgeColor','none'); view(2); colorbar; axis equal;
-    axis([0 1000 -100 300])
-    caxis([0,20000])
+    axis([100 500 0 250])
+    caxis([0,1000000])
     xlabel('x (100 m)')
     ylabel('y (100 m)')
     title('Dijkringgebieden')
 
-loops = 1000;
+loops = 600;
 F(loops) = struct('cdata',[],'colormap',[]);
-for j = 1:loops
+for j = 601 : 1200
     
-    WaterHeights = WaterContentsArraysForGraphs(1:223,1:983,j);
-    [n_Y,n_X] = size(ahn100_max);
-    surf([1:n_X], [1:n_Y],flipud(WaterHeights),'EdgeColor','none'); view(2); colorbar; axis equal;
-    axis([0 1000 -100 300])
-    caxis([0,20000])
+     WaterHeights = TotalDamageMap(:,:,j);
+    [n_Y,n_X] = size(WaterHeights);
+    surf([1:n_X], [1:n_Y],flipud(WaterHeights),'EdgeColor','none'); view(2); axis equal;
+    axis([100 500 0 250])
+    caxis([0,1000000])
     xlabel('x (100 m)')
     ylabel('y (100 m)')
     title('Dijkringgebieden')
+    ColorBar = colorbar;
+    ColorBar.Label.String = 'Damage in Euros';
+    ColorBar.Label.FontSize = 20;
     drawnow
     
-    F(j) = getframe(gcf);
+    F(j - 600) = getframe(gcf);
 end
 
 
-v = VideoWriter('newfile1.avi');
+v = VideoWriter('GraphsAndMovies\5_2_1200frames200x200TotalDamage2.avi');
 open(v)
 writeVideo(v, F)
 close(v)
-clear v F
-
-loops = 1000;
-F2(loops) = struct('cdata',[],'colormap',[]);
-for j = 1:loops
-    
-    WaterHeights = WaterContentsArraysForGraphs(1:223,1:983,j + 1000);
-    [n_Y,n_X] = size(ahn100_max);
-    surf([1:n_X], [1:n_Y],flipud(WaterHeights),'EdgeColor','none'); view(2); colorbar; axis equal;
-    axis([0 1000 -100 300])
-    caxis([0,20000])
-    xlabel('x (100 m)')
-    ylabel('y (100 m)')
-    title('Dijkringgebieden')
-    drawnow
-    
-    F2(j) = getframe(gcf);
-end
-
-v2 = VideoWriter('newfile2.avi');
-open(v2)
-writeVideo(v2, F2)
-close(v2)
-
