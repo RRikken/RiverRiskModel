@@ -54,8 +54,8 @@ classdef BreachFlowModel < handle
             else
                 debug
             end
-            if FlowThroughBreach < 0
-                debug
+            if FlowThroughBreach < 0 || isreal(FlowThroughBreach) == 0
+                FlowThroughBreach = 0;
             end
         end
     end
