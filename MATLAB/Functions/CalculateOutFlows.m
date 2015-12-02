@@ -1,11 +1,24 @@
-function [ WaterOutflowVolumes, FloodedCellsMap, WaterLevelMap, WaterContentMap ] = CalculateOutFlows( WaterLevelMap, WaterContentMap, RowPosition, ColumnPosition, FloodedCellsMap, AreaSize, BottomHeightMap )
+function [ FloodedCellsMap, WaterLevelMap, WaterContentMap ] = CalculateOutFlows( WaterLevelMap, WaterContentMap, RowPosition, ColumnPosition, FloodedCellsMap, AreaSize, BottomHeightMap )
 
-SurroundingCells = zeros(4,2);
+persistent SurroundingWaterLevelsCache SurroundingCellsCache TotalRows TotalColumns
+
+if isempty(TotalRows) || isempty(TotalColumns)
+    [ TotalRows, TotalColumns ] = size(WaterContentMap);
+end
+if isempty(SurroundingCellsCache)
+    SurroundingCellsCache = zeros(4,2);
+end
+if isempty(SurroundingWaterLevelsCache)
+    SurroundingWaterLevelsCache = [1 NaN; 2 NaN; 3 NaN; 4 NaN; 5 NaN];
+end
+
+SurroundingWaterLevels = SurroundingWaterLevelsCache;
+SurroundingCells = SurroundingCellsCache;
+
 SurroundingCells(1:4,1) = RowPosition;
 SurroundingCells(1:4,2) = ColumnPosition;
 SurroundingCells = SurroundingCells + [ -1 0; 0 -1; 0 1; 1 0; ];
-SurroundingWaterLevels = [1 NaN; 2 NaN; 3 NaN; 4 NaN; 5 NaN];
-[ TotalRows, TotalColumns ] = size(WaterContentMap);
+
 WaterContents = zeros(1,4);
 
 for ind = 1 : 4
@@ -13,11 +26,15 @@ for ind = 1 : 4
 end
 
 [ SurroundingWaterlevels, WaterLevelMap ] = CheckSurroundingWaterLevels(WaterLevelMap, BottomHeightMap, RowPosition, TotalRows, ColumnPosition, TotalColumns, SurroundingWaterLevels);
+
 [~, order] = sort(SurroundingWaterlevels(:, 2));
 SurroundingWaterlevels = SurroundingWaterlevels(order, :);
-[WaterOutflowVolumes, WaterContentMap, WaterLevelMap ] = DetermineOutflows(SurroundingWaterlevels, WaterContentMap, WaterLevelMap, BottomHeightMap, AreaSize, RowPosition, ColumnPosition);
 
-if sum(WaterOutflowVolumes(1:4,2)) > 0.00000001
+[WaterOutflowVolumes, WaterContentMap ] = DetermineOutflows(SurroundingWaterlevels, WaterContentMap, AreaSize, RowPosition, ColumnPosition);
+[ WaterContentMap, WaterLevelMap ] = PutOutflowIntoArea(  WaterContentMap, WaterLevelMap, RowPosition, TotalRows, ColumnPosition, TotalColumns, WaterOutflowVolumes );
+[ WaterLevelMap ] = UpdateWaterLevelMap(WaterLevelMap, WaterContentMap, BottomHeightMap, RowPosition, ColumnPosition, AreaSize);
+
+if (WaterOutflowVolumes(1,2) + WaterOutflowVolumes(2,2) + WaterOutflowVolumes(3,2) + WaterOutflowVolumes(4,2)) > 0.00000001
     for ind = 1 : 4
         if WaterOutflowVolumes(ind,2) > 0.00000001 && WaterContents(ind) < 0.00000001
             SelectedCell = [ SurroundingCells(ind,1) SurroundingCells(ind,2) ];
@@ -52,8 +69,19 @@ if RowPosition + 1 <= TotalRows
 end
 end
 
-function [ WaterOutflowVolumes, WaterContentMap, WaterLevelMap ] = DetermineOutflows( SortedWaterLevels, WaterContentMap, WaterLevelMap, BottomHeightMap, AreaSize, RowPosition, ColumnPosition )
-    ContainerVolume = zeros(1,5);
+function [ WaterOutflowVolumes, WaterContentMap ] = DetermineOutflows( SortedWaterLevels, WaterContentMap, AreaSize, RowPosition, ColumnPosition )
+    persistent ContainerVolumeCache WaterOutflowVolumesCache
+
+    if isempty(ContainerVolumeCache)
+        ContainerVolumeCache = zeros(1,5);
+    end
+    if isempty(WaterOutflowVolumesCache)
+        WaterOutflowVolumesCache = zeros(5,2);
+    end
+    
+    WaterOutflowVolumes = WaterOutflowVolumesCache;
+    ContainerVolume = ContainerVolumeCache;
+    
     for ind = 1 : 4
         ContainerVolume(ind) = (SortedWaterLevels(ind + 1, 2) - SortedWaterLevels(ind, 2))  * AreaSize * ind;
     end
@@ -61,43 +89,47 @@ function [ WaterOutflowVolumes, WaterContentMap, WaterLevelMap ] = DetermineOutf
 
     WaterVolume = WaterContentMap(RowPosition, ColumnPosition);
     WaterContentMap(RowPosition, ColumnPosition) = 0;
-    WaterLevelMap(RowPosition, ColumnPosition) = BottomHeightMap(RowPosition, ColumnPosition);
     
-    WaterOutflowVolumes = zeros(5,2);
+    
     WaterOutflowVolumes(:, 1) = SortedWaterLevels(:, 1);
     WaterOutflowVolumes(:, 2) = [0; 0; 0; 0; 0];
     if WaterVolume <=  ContainerVolume( 1 )
         WaterOutflowVolumes( 1, 2 ) = WaterVolume;
         WaterVolume = 0;
-    elseif WaterVolume <=  sum(ContainerVolume( 1 : 2 )) && WaterVolume ~= 0
+    elseif WaterVolume <=  (ContainerVolume( 1 ) + ContainerVolume( 2 )) && WaterVolume ~= 0
         WaterOutflowVolumes( 1, 2 ) = ContainerVolume( 1 ) + (WaterVolume - ContainerVolume( 1 )) / 2;
         WaterOutflowVolumes( 2, 2 ) = (WaterVolume - ContainerVolume( 1 )) / 2;
         WaterVolume = 0;
-    elseif WaterVolume <= sum(ContainerVolume( 1 : 3 )) && WaterVolume ~= 0
-        WaterOutflowVolumes( 1, 2 ) = ContainerVolume( 1 ) + ContainerVolume( 2 ) / 2 + (WaterVolume - sum(ContainerVolume( 1 : 2 ))) / 3;
-        WaterOutflowVolumes( 2, 2 ) = ContainerVolume( 2 ) / 2 + (WaterVolume - sum(ContainerVolume( 1 : 2 ))) / 3;
-        WaterOutflowVolumes( 3, 2 ) = (WaterVolume - sum(ContainerVolume( 1 : 2 ))) / 3;
+    elseif WaterVolume <= (ContainerVolume( 1 ) + ContainerVolume( 2 ) + ContainerVolume( 3 )) && WaterVolume ~= 0
+        WaterOutflowToThirdArea = (WaterVolume - (ContainerVolume( 1 ) + ContainerVolume( 2 ))) / 3;
+        WaterOutflowVolumes( 1, 2 ) = ContainerVolume( 1 ) + ContainerVolume( 2 ) / 2 + WaterOutflowToThirdArea;
+        WaterOutflowVolumes( 2, 2 ) = ContainerVolume( 2 ) / 2 + WaterOutflowToThirdArea;
+        WaterOutflowVolumes( 3, 2 ) = WaterOutflowToThirdArea;
         WaterVolume = 0;
-    elseif WaterVolume <=  sum(ContainerVolume( 1 : 4 )) && WaterVolume ~= 0
+    elseif WaterVolume <=  (ContainerVolume( 1 ) + ContainerVolume( 2 ) + ContainerVolume( 3 ) + ContainerVolume( 4 )) && WaterVolume ~= 0
         WaterOutflowVolumes( 1, 2 ) = ContainerVolume( 1 ) + ContainerVolume( 2 ) / 2 + ContainerVolume( 3 ) / 3 + (WaterVolume - sum(ContainerVolume( 1 : 3 ))) / 4;
         WaterOutflowVolumes( 2, 2 ) = ContainerVolume( 2 ) / 2 + ContainerVolume( 3 ) / 3 + (WaterVolume - sum(ContainerVolume( 1 : 3 ))) / 4;
         WaterOutflowVolumes( 3, 2 ) = ContainerVolume( 3 ) / 3 + (WaterVolume - sum(ContainerVolume( 1 : 3 ))) / 4;
         WaterOutflowVolumes( 4, 2 ) = (WaterVolume - sum(ContainerVolume( 1 : 3 ))) / 4;
         WaterVolume = 0;
-    elseif WaterVolume <=  sum(ContainerVolume( 1 : 5 )) && WaterVolume ~= 0
+    elseif WaterVolume <=  (ContainerVolume( 1 ) + ContainerVolume( 2 ) + ContainerVolume( 3 ) + ContainerVolume( 4 ) + ContainerVolume( 5 )) && WaterVolume ~= 0
         WaterOutflowVolumes( 1, 2 ) = ContainerVolume( 1 ) + ContainerVolume( 2 ) / 2 + ContainerVolume( 3 ) / 3 + ContainerVolume( 4 ) / 4 + (WaterVolume - sum(ContainerVolume( 1 : 4 ))) / 5;
         WaterOutflowVolumes( 2, 2 ) = ContainerVolume( 2 ) / 2 + ContainerVolume( 3 ) / 3 + ContainerVolume( 4 ) / 4 + (WaterVolume - sum(ContainerVolume( 1 : 4 ))) / 5;
         WaterOutflowVolumes( 3, 2 ) = ContainerVolume( 3 ) / 3 + ContainerVolume( 4 ) / 4 + (WaterVolume - sum(ContainerVolume( 1 : 4 ))) / 5;
         WaterOutflowVolumes( 4, 2 ) = ContainerVolume( 4 ) / 4 + (WaterVolume - sum(ContainerVolume( 1 : 4 ))) / 5;
         WaterOutflowVolumes( 5, 2 ) = (WaterVolume - sum(ContainerVolume( 1 : 4 ))) / 5;
         WaterVolume = 0;
-    elseif WaterVolume > 0.00000001 ||WaterVolume < 0.0000001
-        debug
-    else
-        debug
     end
-    
+
     [~, order] = sort(WaterOutflowVolumes(:, 1));
     WaterOutflowVolumes = WaterOutflowVolumes(order, :);
     
+end
+
+function [ WaterLevelMap ] = UpdateWaterLevelMap( WaterLevelMap, WaterContentMap, BottomHeightMap, RowPosition, ColumnPosition, AreaSize )
+    WaterLevelMap(RowPosition - 1, ColumnPosition) = WaterContentMap(RowPosition - 1, ColumnPosition)/AreaSize + BottomHeightMap(RowPosition - 1, ColumnPosition);
+    WaterLevelMap(RowPosition, ColumnPosition - 1) = WaterContentMap(RowPosition, ColumnPosition - 1)/AreaSize + BottomHeightMap(RowPosition, ColumnPosition - 1);
+    WaterLevelMap(RowPosition, ColumnPosition + 1) = WaterContentMap(RowPosition, ColumnPosition + 1)/AreaSize + BottomHeightMap(RowPosition, ColumnPosition + 1);
+    WaterLevelMap(RowPosition + 1, ColumnPosition) = WaterContentMap(RowPosition + 1, ColumnPosition)/AreaSize + BottomHeightMap(RowPosition + 1, ColumnPosition);
+    WaterLevelMap(RowPosition, ColumnPosition) = WaterContentMap(RowPosition, ColumnPosition)/AreaSize + BottomHeightMap(RowPosition, ColumnPosition);
 end

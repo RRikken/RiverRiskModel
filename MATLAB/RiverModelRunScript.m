@@ -1,4 +1,3 @@
-profile on
 %% Load all of the data files
 Directory = 'Data\*.*';
 FileNames = dir(Directory);
@@ -64,7 +63,7 @@ FloodedCellsMap = containers.Map(118583,[118, 583]);
 FloodedCellsMap(118584) = [118, 584];
 FloodedCellsMap(118585) = [118, 585];
 
-WaterHeightWinterBed5_1 = zeros(1,5000) + 11;
+WaterHeightWinterBed5_1 = zeros(1,1000) + 12;
 
 [ AreaMapStructure, WaterContentMap, WaterLevelMap ] = BuildStructureForArea( ahn100_max );
 [  WaterDepth3dMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaSize, WaterContentMap, WaterLevelMap, FloodedCellsMap, DikeBreachLocations5_1, WaterHeightWinterBed5_1, BreachFlow5_1, ahn100_max);
@@ -124,5 +123,4 @@ for Page = 1 : Pages
     
 end
 
-profile off
 % profsave(profile('info'),'ProfilerResults\60Steps')

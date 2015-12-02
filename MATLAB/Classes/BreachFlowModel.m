@@ -16,7 +16,7 @@ classdef BreachFlowModel < handle
     properties (Access = private, Dependent)
         WaterLevelDifference
         WaterLevelInsideBreach
-        WaterLevelOusideBreach
+        WaterLevelOutsideBreach
     end
     
     properties (Access = private, Constant)
@@ -36,10 +36,10 @@ classdef BreachFlowModel < handle
             ReturnedWaterLevelDifference = obj.WaterLevelRiver - obj.WaterLevelDikeRingArea;
         end
         function ReturnedWaterLevelInsideBreach = get.WaterLevelInsideBreach(obj)
-            ReturnedWaterLevelInsideBreach = obj.HeightBreach - obj.WaterLevelDikeRingArea;
+            ReturnedWaterLevelInsideBreach = obj.WaterLevelDikeRingArea - obj.HeightBreach;
         end
-        function ReturnedWaterLevelOusideBreach = get.WaterLevelOusideBreach(obj)
-            ReturnedWaterLevelOusideBreach = obj.HeightBreach - obj.WaterLevelRiver;
+        function ReturnedWaterLevelOutsideBreach = get.WaterLevelOutsideBreach(obj)
+            ReturnedWaterLevelOutsideBreach = obj.WaterLevelRiver - obj.HeightBreach;
         end
         
         function FlowThroughBreach = CalculateFlowThroughBreach(obj)
@@ -47,9 +47,9 @@ classdef BreachFlowModel < handle
             % Qbres = 	(2/3)^1,5 ? g^0,5 ? Bbres ? hbr_uit^1,5	als hbr_in  < ? ? hbr_uit	ongestuwde instroom
             % Qbres = 	(2?g)^0,5 ? Bbres ?  ?h^0,5? hbr_in als hbr_in  > ? ? hbr_uit	gestuwde instroom
             
-            if obj.WaterLevelInsideBreach < (2/3) * obj.WaterLevelOusideBreach
-                FlowThroughBreach = (2/3)^(1.5) * obj.Gravity^(0.5) * obj.WidthBreach * obj.WaterLevelOusideBreach^(1.5);
-            elseif obj.WaterLevelInsideBreach >= (2/3) * obj.WaterLevelOusideBreach
+            if obj.WaterLevelInsideBreach < ((2/3) * obj.WaterLevelOutsideBreach)
+                FlowThroughBreach = (2/3)^(1.5) * obj.Gravity^(0.5) * obj.WidthBreach * obj.WaterLevelOutsideBreach^(1.5);
+            elseif obj.WaterLevelInsideBreach >= ((2/3) * obj.WaterLevelOutsideBreach)
                 FlowThroughBreach = ((2 * obj.Gravity)^0.5) * obj.WidthBreach * obj.WaterLevelDifference^(0.5) * obj.WaterLevelInsideBreach;
             else
                 debug
