@@ -1,20 +1,9 @@
-function [ WaterLevelMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaSize, WaterContentMap, WaterLevelMap, FloodedCellsMap, DikeBreachLocations, RiverWaterHeight, BreachFlowObject, BottomHeightMap)
+function [ WaterLevelMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaSize, WaterContentMap, WaterLevelMap, DikeBreachLocations, RiverWaterHeight, BreachFlowObject, BottomHeightMap)
 
 TotalTimeSteps = length(RiverWaterHeight);
 [ Rows, Columns ] = size(WaterContentMap);
-WaterContents3dMap = zeros(Rows, Columns, TotalTimeSteps/100);
-BreachFlowTotal = 0;
-FloodedCellsValues = values(FloodedCellsMap);
-for CellInd = 1 : FloodedCellsMap.Count
-    BottomHeightMap(FloodedCellsValues{CellInd}(1) + 1, FloodedCellsValues{CellInd}(2)) = 14;
-end
-
-for ind5 = 1 : TotalTimeSteps/100
-    WaterContents3dMap(:,:,ind5) = WaterContentMap;
-end
 
 for TimeStep = 1 : TotalTimeSteps
-    FloodedCellsValues = values(FloodedCellsMap);
     
     MapRowMeasure = BreachFlowObject.InsideWaterHeightMeasuringLocation(1);
     MapColumnMeasure = BreachFlowObject.InsideWaterHeightMeasuringLocation(2);
@@ -23,21 +12,28 @@ for TimeStep = 1 : TotalTimeSteps
     BreachFlowObject.WaterLevelDikeRingArea = BottomHeightMap(MapRowMeasure,MapColumnMeasure);
     BreachFlow = BreachFlowObject.CalculateFlowThroughBreach;
     
-    for ind = 1 : length(DikeBreachLocations(:,1))
+    % Limit the BreachFlow to 1/3 of the water going through the river
+    if BreachFlow > 4000
+        BreachFlow = 4000;
+    end
+    
+   for ind = 1 : length(DikeBreachLocations(:,1))
         % Add water from calculated breachflow to the dike failure postition
         Row = DikeBreachLocations(ind, 1);
         Column = DikeBreachLocations(ind, 2);
         WaterContentMap(Row, Column) = WaterContentMap(Row, Column) + BreachFlow / 3;
         WaterLevelMap(Row, Column) = BottomHeightMap(Row, Column) + WaterContentMap(Row, Column)/AreaSize;
-    end
-    
-    for ind2 = 1 : length(FloodedCellsValues(1,:))
-         [ FloodedCellsMap, WaterLevelMap, WaterContentMap ] = ...
-             CalculateOutFlows(  WaterLevelMap, WaterContentMap, FloodedCellsValues{ ind2 }(1), FloodedCellsValues{ ind2 }(2), FloodedCellsMap, AreaSize, BottomHeightMap );
-    end
-       
-    if mod(TimeStep, 100) == 0
-        WaterContents3dMap(:,:, TimeStep/100) = WaterContentMap;
-    end
+   end
+   parfor Column = 1 : Columns/2
+       LeftTopCellColumnNr = Column * 2 - 1;
+       for Row = 1 : Rows/2
+           LeftTopCellRowNr = Row * 2 - 1;
+           if % Not in water cell list
+               break;
+           else
+                
+           end
+       end
+   end
 end
 end
