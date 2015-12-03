@@ -22,7 +22,6 @@ for TimeStep = 1 : TotalTimeSteps
     BreachFlowObject.WaterLevelRiver = RiverWaterHeight(TimeStep);
     BreachFlowObject.WaterLevelDikeRingArea = BottomHeightMap(MapRowMeasure,MapColumnMeasure);
     BreachFlow = BreachFlowObject.CalculateFlowThroughBreach;
-    BreachFlow = BreachFlow * 4;
     
     for ind = 1 : length(DikeBreachLocations(:,1))
         % Add water from calculated breachflow to the dike failure postition
@@ -36,19 +35,7 @@ for TimeStep = 1 : TotalTimeSteps
          [ FloodedCellsMap, WaterLevelMap, WaterContentMap ] = ...
              CalculateOutFlows(  WaterLevelMap, WaterContentMap, FloodedCellsValues{ ind2 }(1), FloodedCellsValues{ ind2 }(2), FloodedCellsMap, AreaSize, BottomHeightMap );
     end
-    
-    LevelWaterTotal  = sum(sum(WaterLevelMap - BottomHeightMap, 'omitnan'),'omitnan') * AreaSize;
-    WaterContentMapTotal = sum(sum(WaterContentMap, 'omitnan'), 'omitnan');
-    if WaterContentMapTotal + 1 < LevelWaterTotal || WaterContentMapTotal - 1 >  LevelWaterTotal
-        error('These numbers dont add up!')
-    end
-    
-    BreachFlowTotal = BreachFlowTotal + BreachFlow;
-    TotalWaterContents = sum(sum(WaterContentMap, 'omitnan'), 'omitnan');
-
-    if TotalWaterContents + 1 < BreachFlowTotal || TotalWaterContents - 1 >  BreachFlowTotal
-        error('These numbers dont add up!')
-    end
+       
     if mod(TimeStep, 100) == 0
         WaterContents3dMap(:,:, TimeStep/100) = WaterContentMap;
     end
