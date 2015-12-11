@@ -4,7 +4,7 @@ FileNames = dir(Directory);
 NumberOfFileIds = length(FileNames);
 Values = cell(1,NumberOfFileIds);
 
-for K = 3:NumberOfFileIds
+for K = 3 : NumberOfFileIds
     load(FileNames(K).name);
 end
 clear FileNames Directory K NumberOfFileIds Values
@@ -63,12 +63,12 @@ FloodedCellsMap = containers.Map(118583,[118, 583]);
 FloodedCellsMap(118584) = [118, 584];
 FloodedCellsMap(118585) = [118, 585];
 
-WaterHeightWinterBed5_1 = zeros(1, 36000) + 11.45;
+WaterHeightWinterBed5_1 = zeros(1, 10000) + 11.45;
 
 [ AreaMapStructure, WaterContentMap, WaterLevelMap ] = BuildStructureForArea( ahn100_max );
 [  WaterDepth3dMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaSize, WaterContentMap, WaterLevelMap, FloodedCellsMap, DikeBreachLocations5_1, WaterHeightWinterBed5_1, BreachFlow5_1, ahn100_max);
 
-save('ModelOutput\Results5_1.mat','WaterDepth3dMap', 'WaterContents3dMap')
+% save('ModelOutput\Results5_1.mat','WaterDepth3dMap', 'WaterContents3dMap')
 %%
 % Initialize dike ring area and damage model
 % Expand map
