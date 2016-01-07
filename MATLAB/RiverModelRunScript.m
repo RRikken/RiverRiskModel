@@ -9,19 +9,7 @@ for K = 3 : NumberOfFileIds
 end
 clear FileNames Directory K NumberOfFileIds Values
 
-% LargeAreaAHN400_max = zeros(222 / 2, 982 / 2);
-% for Row = 1 : 222 / 2
-%     for Column =  1 : 982 / 2
-%         RowOne = Row * 2-1;
-%         RowTwo = Row * 2;
-%         ColumnOne = Column * 2 - 1;
-%         ColumnTwo = Column * 2;
-%         MaxFromArea  = max(max(ahn100_max( RowOne : RowTwo, ColumnOne : ColumnTwo)));
-%         LargeAreaAHN400_max(Row, Column) = MaxFromArea;
-%     end
-% end
-% 
-% clear Row Column RowOne RowTwo ColumnOne ColumnTwo MaxFromArea
+
 
 %%  Initialize river model
 % Select the data for the breachlocations
@@ -53,74 +41,41 @@ BreachFlow5_2 = BreachFlowModel(WidthBreach5_2, BreachBottomHeight5_2, InsideHei
 %% Set variables needed
 DikeBreachLocations5_1 =[118,583; 118,584;118,585;];
 % DikeBreachLocations5_2 = [9, 343; 9, 344; 9, 345];
-% DikeBreachLocations5_2 = [6, 172; 6, 173];
-UniqueIDs = [118583; 118584;118585;];
-% UniqueIDs = [59291; 59292; ];
-% UniqueIDs = [6172; 6173; ];
 AreaSize = 100 * 100;
-
-FloodedCellsMap = containers.Map(118583,[118, 583]);
-FloodedCellsMap(118584) = [118, 584];
-FloodedCellsMap(118585) = [118, 585];
-
 WaterHeightWinterBed5_1 = zeros(1, 10000) + 11.45;
+[ Rows, Columns ] = size(ahn100_max);
+WaterContentMap = zeros(Rows, Columns);
 
-[ AreaMapStructure, WaterContentMap, WaterLevelMap ] = BuildStructureForArea( ahn100_max );
-[  WaterDepth3dMap, WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaSize, WaterContentMap, WaterLevelMap, FloodedCellsMap, DikeBreachLocations5_1, WaterHeightWinterBed5_1, BreachFlow5_1, ahn100_max);
+[  WaterContents3dMap ] = CalculateWaterDepthAndFlowRate(AreaSize, WaterContentMap, DikeBreachLocations5_1, WaterHeightWinterBed5_1, BreachFlow5_1, ahn100_max);
 
-% save('ModelOutput\Results5_1.mat','WaterDepth3dMap', 'WaterContents3dMap')
+save('ModelOutput\Results5_1.mat','WaterDepth3dMap', 'WaterContents3dMap')
 %%
 % Initialize dike ring area and damage model
-% Expand map
-% [ Rows, Columns, Pages ] = size(WaterDepth3dMap);
-% FloodDepthMapTemp = zeros(223,983, Pages);
-% FlowRateMapTemp = zeros(223,983, Pages);
-% WaterRiseRateMap = zeros(223,983, Pages);
-% WaterContentsMap = zeros(223,983, Pages);
-% for Page = 1 : Pages
-%     for Row = 1 : Rows
-%         for Column =  1 : Columns
-%             RowOne = Row * 2-1;
-%             RowTwo = Row * 2;
-%             ColumnOne = Column * 2 - 1;
-%             ColumnTwo = Column * 2;
-%             FloodDepthMapTemp(RowOne:RowTwo, ColumnOne:ColumnTwo, Page) = WaterDepth3dMap(Row,Column, Page);
-%             WaterContentsMap(RowOne:RowTwo, ColumnOne:ColumnTwo, Page) = WaterContents3dMap(Row,Column, Page);
-%             if (Page + 5) >= Pages
-%                 WaterRiseRateMap(RowOne:RowTwo,ColumnOne:ColumnTwo,Page) = WaterRiseRateMap(Row,Column,Page - 1);
-%             else
-%                 WaterRiseRateMap(RowOne:RowTwo,ColumnOne:ColumnTwo,Page) = (WaterDepth3dMap(Row,Column, Page + 6) -WaterDepth3dMap(Row,Column, Page)); % Multiply to convert to meters per hour
-%             end
-%         end
-%     end
-% end
-% %%
-% WaterRiseRateMapMax = max(WaterRiseRateMap, [], 3, 'omitnan');
-% %calculate damages
-% ahn100_gem = ahn100_max;
-% DikeRingArea43 = DikeRingArea(43, landgebruik, ahn100_gem, ahn100_max, inwoners);
-% DamageModelOne = DamageModel;
-% % [TypeOfLandUsage, MaximumDamage ] =  DamageModelOne.ChangeLandUsageToStandardModelTypes(DikeRingArea43.Landusage, MaximumDamageLookupTable);
-% 
-% [ Rows, Columns ] = size(ahn100_max);
-% TotalDamageMap = zeros(Rows, Columns, Pages);
-% CasualtyMap = zeros(Rows, Columns, Pages);
-% FlowRate = zeros(Rows, Columns) + 1;
-% CriticalFlowRate = zeros(Rows, Columns) + 8;
-% ShelterFactor = zeros(Rows, Columns);
-% Storm = 0;
-% FlowRateMapTemp = WaterRiseRateMap;
-% NumberOfUnits = ones(Rows, Columns) .* (200 * 200);
-% 
-% for Page = 1 : Pages
-%     %Calculate damage
-%     DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMapTemp(:,:,Page), FlowRateMapTemp(:,:,Page), CriticalFlowRate, ShelterFactor, Storm);
-%     [ TotalDamageMap(:,:,Page) ] = DamageModelOne.CalculateStandardDamageModel( DamageFactorsMap, MaximumDamage, NumberOfUnits);
-% 
-%     % Calculate casualties
-%     CasualtyMap(:,:,Page) = DamageModelOne.CalculateCasualties(FloodDepthMapTemp(:,:,Page), FlowRateMapTemp(:,:,Page), WaterRiseRateMap(:,:,Page), inwoners);
-% %     DikeRingArea43.PlotArea( CasualtyMap(:,:,Page));
-%     
-% end
-% 
-% % profsave(profile('info'),'ProfilerResults\60Steps')
+
+WaterRiseRateMapMax = max(WaterRiseRateMap, [], 3, 'omitnan');
+%calculate damages
+ahn100_gem = ahn100_max;
+DikeRingArea43 = DikeRingArea(43, landgebruik, ahn100_gem, ahn100_max, inwoners);
+DamageModelOne = DamageModel;
+[TypeOfLandUsage, MaximumDamage ] =  DamageModelOne.ChangeLandUsageToStandardModelTypes(DikeRingArea43.Landusage, MaximumDamageLookupTable);
+
+[ Rows, Columns ] = size(ahn100_max);
+TotalDamageMap = zeros(Rows, Columns, Pages);
+CasualtyMap = zeros(Rows, Columns, Pages);
+FlowRate = zeros(Rows, Columns) + 1;
+CriticalFlowRate = zeros(Rows, Columns) + 8;
+ShelterFactor = zeros(Rows, Columns);
+Storm = 0;
+FlowRateMapTemp = WaterRiseRateMap;
+NumberOfUnits = ones(Rows, Columns) .* (200 * 200);
+
+for Page = 1 : Pages
+    %Calculate damage
+    DamageFactorsMap = DamageModelOne.SelectDamageFactors(TypeOfLandUsage, FloodDepthMapTemp(:,:,Page), FlowRateMapTemp(:,:,Page), CriticalFlowRate, ShelterFactor, Storm);
+    [ TotalDamageMap(:,:,Page) ] = DamageModelOne.CalculateStandardDamageModel( DamageFactorsMap, MaximumDamage, NumberOfUnits);
+
+    % Calculate casualties
+    CasualtyMap(:,:,Page) = DamageModelOne.CalculateCasualties(FloodDepthMapTemp(:,:,Page), FlowRateMapTemp(:,:,Page), WaterRiseRateMap(:,:,Page), inwoners);
+    DikeRingArea43.PlotArea( CasualtyMap(:,:,Page));
+    
+end
