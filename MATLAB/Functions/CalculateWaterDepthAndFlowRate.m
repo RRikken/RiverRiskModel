@@ -11,6 +11,9 @@ ReducedBottomHeightMap22 = cell(111, 491);
 ReducedBottomHeightMap11 = SliceArrayForParForLoop( ReducedBottomHeightMap11, BottomHeightMap, 'ReduceHeightMap_StartAt_1,1');
 ReducedBottomHeightMap22 = SliceArrayForParForLoop( ReducedBottomHeightMap22, BottomHeightMap, 'ReduceHeightMap_StartAt_2,2');
 
+HeightMap11OnWorker = parallel.pool.Constant(ReducedBottomHeightMap11);
+HeightMap22OnWorker = parallel.pool.Constant(ReducedBottomHeightMap22);
+
 for TimeStep = 1 : TotalTimeSteps
     %% Loop over all the floodtime
     %Calculate breachflow for this iteration
@@ -38,14 +41,14 @@ for TimeStep = 1 : TotalTimeSteps
     [ WaterContentsMapSlicedForParForLoop ] = SliceArrayForParForLoop( WaterContentsMapReduced, WaterContentMap, 'StartAt_1,1');
     TempWaterContentArray = cell(Rows, Columns);
     
-    for Row = 1 : Rows
-        for Column = 1 : Columns
+    parfor Row = 1 : Rows
+        for Column = 1 : Columns 
             if WaterContentsMapReduced(Row, Column) > 0
-                TempWaterContentArray{ Row, Column } = CalculateWaterFlowOverArea( WaterContentsMapSlicedForParForLoop{Row, Column}, ReducedBottomHeightMap11{ Row, Column }, AreaSize );
+                TempWaterContentArray{ Row, Column } = CalculateWaterFlowOverArea( WaterContentsMapSlicedForParForLoop{Row, Column}, HeightMap11OnWorker.Value{ Row, Column }, AreaSize );
             end
         end
     end
-    
+
     for Row = 1 : Rows
         for Column = 1 : Columns
             if WaterContentsMapReduced( Row, Column ) > 0
@@ -61,10 +64,10 @@ for TimeStep = 1 : TotalTimeSteps
     [ WaterContentsMapSlicedForParForLoop ] = SliceArrayForParForLoop( WaterContentsMapReduced, WaterContentMap, 'StartAt_2,2');
     TempWaterContentArray = cell(Rows, Columns);
     
-    for Row = 1 : Rows
+    parfor Row = 1 : Rows
         for Column = 1 : Columns
             if WaterContentsMapReduced( Row, Column ) > 0
-                TempWaterContentArray{ Row, Column } = CalculateWaterFlowOverArea( WaterContentsMapSlicedForParForLoop{Row, Column}, ReducedBottomHeightMap22{ Row, Column }, AreaSize );
+                TempWaterContentArray{ Row, Column } = CalculateWaterFlowOverArea( WaterContentsMapSlicedForParForLoop{Row, Column}, HeightMap22OnWorker.Value{ Row, Column }, AreaSize );
             end
         end
     end
