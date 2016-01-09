@@ -9,7 +9,7 @@ for K = 3 : NumberOfFileIds
 end
 clear FileNames Directory K NumberOfFileIds Values
 
-parpool('local', 4)
+% parpool('local', 4)
 
 %%  Initialize river model
 % Select the data for the breachlocations
@@ -42,7 +42,7 @@ BreachFlow5_2 = BreachFlowModel(WidthBreach5_2, BreachBottomHeight5_2, InsideHei
 DikeBreachLocations5_1 =[118,583; 118,584;118,585;];
 % DikeBreachLocations5_2 = [9, 343; 9, 344; 9, 345];
 AreaSize = 100 * 100;
-WaterHeightWinterBed5_1 = zeros(1, 1000) + 11.45;
+WaterHeightWinterBed5_1 = zeros(1, 10000) + 11.45;
 [ Rows, Columns ] = size(ahn100_max);
 WaterContentMap = zeros(Rows, Columns);
 

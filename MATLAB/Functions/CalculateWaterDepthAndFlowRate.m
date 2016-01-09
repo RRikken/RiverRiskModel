@@ -40,21 +40,29 @@ for TimeStep = 1 : TotalTimeSteps
     [ WaterContentsMapReduced ] = ReduceArrayBySquareSum( WaterContentMap, 'StartAt_1,1' );
     [ WaterContentsMapSlicedForParForLoop ] = SliceArrayForParForLoop( WaterContentsMapReduced, WaterContentMap, 'StartAt_1,1');
     TempWaterContentArray = cell(Rows, Columns);
+    ii = 1;
     
-    parfor Row = 1 : Rows
-        for Column = 1 : Columns 
-            if WaterContentsMapReduced(Row, Column) > 0
-                TempWaterContentArray{ Row, Column } = CalculateWaterFlowOverArea( WaterContentsMapSlicedForParForLoop{Row, Column}, HeightMap11OnWorker.Value{ Row, Column }, AreaSize );
-            end
-        end
-    end
-
     for Row = 1 : Rows
         for Column = 1 : Columns
             if WaterContentsMapReduced( Row, Column ) > 0
-                WaterContentMap(Row * 2 - 1 : Row * 2, Column * 2 - 1 : Column *2) = TempWaterContentArray{ Row, Column };
+                LinearIndexedWaterMap( ii ).WaterContentSquare = WaterContentsMapSlicedForParForLoop{ Row, Column };
+                LinearIndexedWaterMap( ii ).IndexSubscripts = [ Row Column ];
+                ii = ii + 1;
             end
         end
+    end
+    
+    MaxIndex = length(LinearIndexedWaterMap);
+    
+    parfor jj = 1 : MaxIndex
+                LinearIndexedWaterMap(jj).WaterContentSquare = CalculateWaterFlowOverArea( LinearIndexedWaterMap( jj ).WaterContentSquare, ...
+                    HeightMap11OnWorker.Value{ LinearIndexedWaterMap( jj ).IndexSubscripts(1,1), LinearIndexedWaterMap( jj ).IndexSubscripts(1,2) }, AreaSize );
+    end
+
+    for kk = 1 : MaxIndex
+        Row = LinearIndexedWaterMap( kk ).IndexSubscripts(1,1); 
+        Column = LinearIndexedWaterMap( kk ).IndexSubscripts(1,2);
+        WaterContentMap(Row * 2 - 1 : Row * 2, Column * 2 - 1 : Column *2) = LinearIndexedWaterMap( kk ).WaterContentSquare;
     end
     
     clear TempWaterContentArray WaterContentsMapReduced WaterContentsMapSlicedForParForLoop
@@ -63,21 +71,29 @@ for TimeStep = 1 : TotalTimeSteps
     [ WaterContentsMapReduced ] = ReduceArrayBySquareSum( WaterContentMap, 'StartAt_2,2' );
     [ WaterContentsMapSlicedForParForLoop ] = SliceArrayForParForLoop( WaterContentsMapReduced, WaterContentMap, 'StartAt_2,2');
     TempWaterContentArray = cell(Rows, Columns);
+    ii = 1;
     
-    parfor Row = 1 : Rows
-        for Column = 1 : Columns
-            if WaterContentsMapReduced( Row, Column ) > 0
-                TempWaterContentArray{ Row, Column } = CalculateWaterFlowOverArea( WaterContentsMapSlicedForParForLoop{Row, Column}, HeightMap22OnWorker.Value{ Row, Column }, AreaSize );
-            end
-        end
-    end
-   
     for Row = 1 : Rows
         for Column = 1 : Columns
             if WaterContentsMapReduced( Row, Column ) > 0
-                WaterContentMap(Row * 2 : Row * 2 + 1, Column * 2  : Column * 2 + 1) = TempWaterContentArray{ Row, Column };
+                LinearIndexedWaterMap( ii ).WaterContentSquare = WaterContentsMapSlicedForParForLoop{ Row, Column };
+                LinearIndexedWaterMap( ii ).IndexSubscripts = [ Row Column ];
+                ii = ii + 1;
             end
         end
+    end
+    
+    MaxIndex = length(LinearIndexedWaterMap);
+    
+    parfor jj = 1 : MaxIndex
+                LinearIndexedWaterMap(jj).WaterContentSquare = CalculateWaterFlowOverArea( LinearIndexedWaterMap( jj ).WaterContentSquare, ...
+                    HeightMap22OnWorker.Value{ LinearIndexedWaterMap( jj ).IndexSubscripts(1,1), LinearIndexedWaterMap( jj ).IndexSubscripts(1,2) }, AreaSize );
+    end
+
+    for kk = 1 : MaxIndex
+        Row = LinearIndexedWaterMap( kk ).IndexSubscripts(1,1); 
+        Column = LinearIndexedWaterMap( kk ).IndexSubscripts(1,2);
+        WaterContentMap(Row * 2 - 1 : Row * 2, Column * 2 - 1 : Column *2) = LinearIndexedWaterMap( kk ).WaterContentSquare;
     end
     
     clear TempWaterContentArray WaterContentsMapReduced WaterContentsMapSlicedForParForLoop
