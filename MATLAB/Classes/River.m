@@ -113,25 +113,6 @@ classdef River
                 WaveRepeatTime(FlowVectorInd) = exp((WaveLobith(FlowVectorInd) - obj.DivisionOfWater .* obj.c) ./ (obj.DivisionOfWater .* obj.a));            
             end
         end
-        
-        function PlotRiverProfile(WidthSummerBed, WidthWinterBed, BottomHeightSummerBed, BottomHeightWinterBed,h_max)
-%             - Kolom 1: Locatie van het profiel in de rivier
-%             - Kolom 2: Gemiddelde stroomvoerende breedte zomerbed b1 (m)
-%             - Kolom 3: Gemiddelde bodemhoogte zomerbed z1 (m+NAP)
-%             - Kolom 4: Gemiddelde stroomvoerende breedte kribsectie+uiterwaard b2 (m)
-%             - Kolom 5: Gemiddelde bodemhoogte kribsectie+uiterwaard z2 (m+NAP)
-%             - Kolom 6: Gemiddeld verhang i (m/km)
-%             x = [0,0, profiel_1_2(2), profiel_1_2(2),(profiel_1_2(2)+profiel_1_2(4)),(profiel_1_2(2)+profiel_1_2(4))];
-%             y = [h_max,profiel_1_2(3),profiel_1_2(3),profiel_1_2(5),profiel_1_2(5),h_max];
-            x = [0,0, WidthSummerBed, WidthSummerBed,(WidthSummerBed + WidthWinterBed), ...
-                (WidthSummerBed + WidthWinterBed)];
-            y = [h_max,BottomHeightSummerBed,BottomHeightSummerBed,BottomHeightWinterBed,BottomHeightWinterBed,h_max];
-            plot(x,y,'LineWidth',3)
-            axis([-100 800 -6 10])
-            xlabel('x (m)')
-            ylabel('Bodemhoogte (m+NAP)')
-            title('Rivierprofiel locatie 5.1')
-        end
     end
     
 end
